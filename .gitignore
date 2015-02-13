@@ -2,3 +2,4 @@ production.cfg
 *.pyc
 venv
 vvmroster.wsgi
+roster.db
