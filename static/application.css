@@ -1,0 +1,29 @@
+/*
+ *
+ */
+
+/* required for Angular UI Bootstrap */
+.nav, .pagination, .carousel, .panel-title a {
+	cursor: pointer;
+}
+
+.modal-backdrop {
+	bottom: 0;
+	position: fixed;
+}
+
+body {
+	background-color: #ddd;
+}
+
+#page {
+	border: 1px #e4e4e4 solid;
+	padding: 20px;
+	border-radius: 4px;
+	box-shadow: 0 0 6px #ccc;
+	background-color: #fff;
+}
+
+#login_user_form label {
+	width: 10em;
+}

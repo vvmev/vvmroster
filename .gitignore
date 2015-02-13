@@ -1,0 +1,4 @@
+production.cfg
+*.pyc
+venv
+vvmroster.wsgi

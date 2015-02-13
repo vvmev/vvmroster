@@ -1,0 +1,66 @@
+{% raw %}
+<html data-ng-app="rosterApp">
+<head>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.11/angular.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.11/i18n/angular-locale_de-de.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.11/angular-resource.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/ng-table/0.3.3/ng-table.min.js"></script>
+	<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.12.0/ui-bootstrap-tpls.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.2.13/angular-ui-router.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/restangular/1.4.0/restangular.min.js"></script>
+	<script src="static/application.js"></script>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
+	<link rel="stylesheet" type="text/css" href="static/application.css">
+	<title>Dienstplan Aumühle</title>
+</head>
+<body ng-controller="MainController">
+	<nav class="navbar navbar-default" role="navigation" id="nav">
+		<div class="container">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle" ng-init="navCollapsed = true" ng-click="navCollapsed = !navCollapsed">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" ui-sref="roster">Dienstplan Aumühle</a>
+			</div>
+			<div class="collapse navbar-collapse" ng-class="!navCollapsed && 'in'" ng-click="navCollapsed=true">
+				<ul class="nav navbar-nav">
+					<li ui-sref-active="active"><a ui-sref="today">{{status.today | date:'EEE d. MMM'}}</a></li>
+					<li class="dropdown" dropdown ng-class="{active: $state.includes('day')}">
+						<a class="dropdown-toggle" dropdown-toggle>Weitere Tage<span class="caret"></span></a>
+						<ul class="dropdown-menu" role="menu">
+							<li ng-repeat="day in status.days" ui-sref-active="active"><a ui-sref="day({day: day})">{{day | date:'EEE d. MMM'}}</a></li>
+						</ul>
+					</li>
+				</ul>
+				<!--p class="navbar-text navbar-right">Signed in as <a href="#" class="navbar-link">Mark Otto</a></p -->
+				<ul class="nav navbar-nav navbar-right">
+					<li ng-if='status.admin_user' ui-sref-active="active"><a
+					ui-sref="admin-users">Benutzer-Verwaltung</a></li>
+					<li class="dropdown" dropdown>
+						<a class="dropdown-toggle" dropdown-toggle><span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+						<span class="caret"></span><span class="sr-only">Benutzermenü</span></a>
+						<ul class="dropdown-menu" role="menu">
+							<li ui-sref-active="active"><a ui-sref="settings">Einstellungen</a></li>
+							<li><a href="logout">{{status.name}} abmelden</a></li>
+						</ul>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</nav>
+	<div id="page" class="container">
+		<div class="row top-buffer">
+			<div class="col-xs-8 col-xs-offset-2">
+				<div ui-view></div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
+{% endraw %}

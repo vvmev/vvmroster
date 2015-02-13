@@ -1,0 +1,77 @@
+<div ng-controller="SettingsController">
+	<div class="row">
+			<h3>Einstellungen für {{ status.name }}</h3>
+	</div>
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h4>Name und Email</h4>
+		</div>
+		<div class="panel-body">
+			<div class="row">
+				<div class="col-xs-2"><label for="name">Name</label></div>
+				<div class="col-xs-10">
+					<input type="text" name="name" ng-model="user.name" required
+						placeholder="Bernd Nutzer" class="input-xlarge col-sm-9"><br><br>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-xs-2"><label for="name">Email</label></div>
+				<div class="col-xs-10">
+					<input type="text" name="email" ng-model="user.email" required
+						placeholder="b.nutzer@example.com" class="input-xlarge col-sm-9"><br><br>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-xs-2"><label for="name">Rollen</label></div>
+				<div class="col-xs-10"><span ng-repeat="role in user.roles" class="label label-default">{{role}}</span></div>
+			</div>
+			<div class="row">
+				<div class="col-xs-3 pull-right">
+					<button class="btn btn-primary" ng-click="save()">Speichern</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h4>Passwort ändern</h4>
+		</div>
+		<div class="panel-body">
+			<div class="row">
+				<div class="col-xs-3 pull-right">
+					<button class="btn btn-primary" ng-click="changePassword()">Passwort ändern</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<script type="text/ng-template" id="changePassword.html">
+	<div class="modal-header">
+		<h3>Passwort ändern</h3>
+		<alert ng-if="alert" type="danger"
+			close="closeAlert($index)"><b>Fehler!</b> {{alert}}</alert>
+	</div>
+	<div class="modal-body">
+		<div class="row form-group">
+		</div>
+		<div class="row form-group">
+			<label class="form-label col-sm-3" for="password">Passwort (alt)</label>
+			<input type="password" name="password" ng-model="passwords.old" required
+				placeholder="" class="input-xlarge col-sm-8">
+		</div>
+		<div class="row form-group">
+			<label class="form-label col-sm-3" for="password">Passwort (neu)</label>
+			<input type="password" name="password" ng-model="passwords.new1" required
+				placeholder="" class="input-xlarge col-sm-8">
+		</div>
+		<div class="row form-group">
+			<label class="form-label col-sm-3" for="password">Passwort (Wiederholung)</label>
+			<input type="password" name="password" ng-model="passwords.new2" required
+				placeholder="" class="input-xlarge col-sm-8">
+		</div>
+	</div>
+	<div class="modal-footer">
+		<button class="btn btn-default" ng-click="cancel()">Abbrechen</button>
+		<button class="btn btn-primary" ng-enter="ok()" ng-click="ok()">Speichern</button>
+	</div>
+</script>
