@@ -3,3 +3,4 @@ production.cfg
 venv
 vvmroster.wsgi
 roster.db
+.DS_Store
