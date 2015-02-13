@@ -56,23 +56,59 @@ roster.run(function($state, $rootScope, $urlRouter, $log) {
 });
 
 
-roster.controller('MainController', function(Restangular, $scope, $rootScope, $state) {
+roster.controller('MainController', function(Restangular, $scope, $rootScope, $state, $timeout) {
 	var resource = Restangular.all('status');
-	resource.get(1).then(function(items) {
-		$scope.status = items[0];
-		$rootScope.status = items[0];
-	});
+	var updateTimeout;
+	var startUpdateTimer = function() {
+		if (updateTimeout) {
+			$timeout.cancel(updateTimeout);
+		}
+		updateTimeout = $timeout(update, 15*60*1000);
+	}
+	var update = function() {
+		resource.get(1).then(function(items) {
+			$scope.status = items[0];
+			$rootScope.status = items[0];
+			startUpdateTimer();
+		});
+	};
+	update();
 });
 
 
 roster.controller("DayController", function(Restangular, $scope, $rootScope, $stateParams, $filter, $timeout) {
+	$scope.loading = true;
 	$scope.day = $rootScope.status.today;
 	if ($stateParams.day) {
 		$scope.day = $stateParams.day;
 	}
+	$scope.will_sums = {
+		will_open: 0,
+		will_service: 0,
+		will_close: 0,
+	}
 	var resource = Restangular.all('roster/' + $filter('date')($scope.day, "yyyy-MM-dd'T'"));
+	var updateCounts = function() {
+		$scope.will_sums.will_open = 0;
+		$scope.will_sums.will_service = 0;
+		$scope.will_sums.will_close = 0;
+		$scope.rosterentries.map(function(e) {
+			if (e.will_open)
+				$scope.will_sums.will_open++;
+			if (e.will_service)
+				$scope.will_sums.will_service++
+			if (e.will_close)
+				$scope.will_sums.will_close++;
+		});
+		var e = $scope.myself;
+		if (e.will_open)
+			$scope.will_sums.will_open++;
+		if (e.will_service)
+			$scope.will_sums.will_service++
+		if (e.will_close)
+			$scope.will_sums.will_close++;
+	}
 	var update = function() {
-		$scope.loading = true;
 		resource.getList().then(function(entries){
 			$scope.myself = {
 				name: $rootScope.status.name,
@@ -88,15 +124,20 @@ roster.controller("DayController", function(Restangular, $scope, $rootScope, $st
 				if (e.user_id == $rootScope.status.user_id) {
 					$scope.myself = e;
 				} else {
-					$scope.rosterentries.push(e);
+					if (e.will_open || e.will_service || e.will_close ||
+							e.comment != '') {
+						$scope.rosterentries.push(e);
+					}
 				}
 			});
+			updateCounts();
 			$scope.$watch('myself.will_open', debounceUpdate);
 			$scope.$watch('myself.will_service', debounceUpdate);
 			$scope.$watch('myself.will_close', debounceUpdate);
 			$scope.$watch('myself.comment', debounceUpdate);
 		}).finally(function(){
 			$scope.loading = false;
+			startUpdateTimer();
 		});
 	}
 	$scope.update = update;
@@ -110,15 +151,24 @@ roster.controller("DayController", function(Restangular, $scope, $rootScope, $st
 			});
 		}
 	}
+	var updateTimeout;
+	var startUpdateTimer = function() {
+		if (updateTimeout) {
+			$timeout.cancel(updateTimeout);
+		}
+		updateTimeout = $timeout(update, 5*60*1000);
+	};
 	var debounceTimeout;
 	var debounceUpdate = function(newVal, oldVal, scope) {
 		if ($scope.loading || newVal === oldVal) {
 			return;
 		}
+		updateCounts();
 		if (debounceTimeout) {
 			$timeout.cancel(debounceTimeout);
 		}
 		debounceTimeout = $timeout($scope.save, 1000);
+		startUpdateTimer();
 	};
 	update();
 });

@@ -4,6 +4,8 @@
 from ReverseProxied import ReverseProxied
 import datetime
 import re
+import os
+
 import flask
 #from flask import Flask, abort, jsonify, session, redirect, render_template, request, url_for
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -24,7 +26,8 @@ app.config['SECRET_KEY'] = 'developmentNotSoSecretKey'
 app.config['SECURITY_PASSWORD_HASH'] = 'sha512_crypt'
 app.config['SECURITY_PASSWORD_SALT'] = 'developmentNotSoSecretKey'
 
-app.config.from_envvar('VVMROSTER_APPLICATION_SETTINGS_PATH')
+if 'VVMROSTER_APPLICATION_SETTINGS_PATH' in os.environ:
+	app.config.from_envvar('VVMROSTER_APPLICATION_SETTINGS_PATH')
 
 roles_users = db.Table('roles_users',
 		db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
@@ -57,19 +60,6 @@ user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(app, user_datastore)
 
 
-def initdb():
-	db.create_all()
-	admin_role = Role.query.filter_by(name='admin').first()
-	if admin_role == None:
-		admin_role = user_datastore.create_role(name='admin',
-			description='manage users etc.')
-	if user_datastore.get_user('stb@lassitu.de') == None:
-		user_datastore.create_user(name='Stefan Bethke',
-			email='stb@lassitu.de',
-			password=encrypt_password('password'), roles=[admin_role])
-	db.session.commit()
-
-
 class Roster(db.Model):
 	__tablename__ = 'roster'
 	day = db.Column(db.DateTime, primary_key=True)
@@ -89,6 +79,19 @@ class Roster(db.Model):
 
 	def __repr__(self):
 		return '<Roster {:d} {}>'.format(self.id, self.member_name)
+
+@app.before_first_request
+def initdb():
+	db.create_all()
+	admin_role = Role.query.filter_by(name='admin').first()
+	if admin_role == None:
+		admin_role = user_datastore.create_role(name='admin',
+			description='manage users etc.')
+	if user_datastore.get_user('stb@lassitu.de') == None:
+		user_datastore.create_user(name='Stefan Bethke',
+			email='stb@lassitu.de',
+			password=encrypt_password('password'), roles=[admin_role])
+	db.session.commit()
 
 
 @app.route('/')

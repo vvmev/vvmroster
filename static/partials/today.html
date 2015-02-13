@@ -4,20 +4,26 @@
 			<h2>Dienstplan für {{day | date:"EEEE', den 'd.M.yyyy" }}</h3>
 		</div>
 		<div class="col-xs-1">
-			<h3><button class="btn btn-default" ng-click="update()"><span class="glyphicon glyphicon-refresh"></span></button></h3>
+			<!--<h3><button class="btn btn-default" ng-click="update()"><span class="glyphicon glyphicon-refresh"></span></button></h3>-->
 		</div>
 	</div>
 	<div class="row">
 		<div class="col-xs-12">
-	<p>Erklärungstext Lorem ipsum dolor sit amet, consetetur sadipscing
-	elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna
-	aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo
-	dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus
-	est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur
-	sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et
-	dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et
-	justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea
-	takimata sanctus est Lorem ipsum dolor sit amet.</p>
+			<p>In der folgenden Tabelle seht ihr, wer an diesem Tag in Aumühle anwesend
+				sein möchte, und welche Aufgaben er übernehmen will. In der letzten,
+				grünen Zeile seid ihr schon vorgemerkt. Kreuzt einfach an, ob ihr zum
+				Öffnen um 11 Uhr da seid, ob ihr euch um Besucher kümmern wollt, und ob
+				ihr ab 17 Uhr den Lokschuppen schließen werdet. Im Kommentarfeld könnt
+				ihr zusätzliche Hinweise geben, z. B. „Ich baue den Kaffeestand auf“,
+				oder „Kümmere mich um die Gruppe“. </p>
+			<p>Wenn ihr nicht kommen könnt, oder kommt, aber euch um etwas anderes als
+				die Besucher kümmern wollt oder müsst, lasst einfach das Kreuz bei
+				<span class="glyphicon glyphicon-record"></span> Betreuung weg; ihr 
+				braucht keine Begründung einzugeben.</p>
+			<p>Eure Eingaben werden automatisch gespeichert. Ihr könnt eure Eingabe
+				jederzeit wieder ändern. Solltet ihr zunächst zugesagt haben, jetzt aber
+				kurzfristig verhindert sein, ist ein Kommentar für die Kollegen
+				hilfreich.</p>
 		</div>
 	</div>
 	<div class="row">
@@ -46,7 +52,14 @@
 					<td><input type="checkbox" name="will_open" ng-model="myself.will_open" class="input-xlarge"></td>
 					<td><input type="checkbox" name="will_open" ng-model="myself.will_service" class="input-xlarge"></td>
 					<td><input type="checkbox" name="will_open" ng-model="myself.will_close" class="input-xlarge"></td>
-					<td><input type="text" name="name" ng-model="myself.comment" placeholder="Ich mache heute..." class="input-xlarge">
+					<td><input type="text" name="name" ng-model="myself.comment" placeholder="Ich mache heute..." class="input-xlarge"></td>
+				</tr>
+				<tr>
+					<td><b>Summe Zusagen:</b></td>
+					<td><span class="badge">{{will_sums.will_open}}</span></td>
+					<td><span class="badge">{{will_sums.will_service}}</span></td>
+					<td><span class="badge">{{will_sums.will_close}}</span></td>
+					<td>
 </td>
 				</tr>
 				</tbody>
@@ -59,19 +72,32 @@
 		</div>
 	</div>
 	<div class="row">
-		<div class="col-xs-1"><span class="glyphicon glyphicon-log-in"></span>&nbsp;</div>
-		<div class="col-xs-11"><b>Ich öffne</b>: ich bin rechtzeitig da,
-		damit der Lokschuppen um 11 Uhr Besucher empfangen kann.
-		 Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.</div>
+		<div class="col-xs-1"><p><span class="glyphicon glyphicon-log-in"></span>&nbsp;</p></div>
+		<div class="col-xs-11">
+			<p><b>Ich öffne</b>: ich bin rechtzeitig da, damit der Lokschuppen um 11 Uhr
+				Besucher empfangen kann. Idealerweise gehören dazu alle Vorbereitungen
+				wie z. B. das Einschalten der Ausstellungswand, das Aufschließen der
+				Ausstellungsfahrzeuge, das Öffnen der Tore und das Aufstellen des Schilds
+				am Waldweg.
+			</p>
+		</div>
 	</div>
 	<div class="row">
-		<div class="col-xs-1"><span class="glyphicon glyphicon-record"></span>&nbsp;</div>
-		<div class="col-xs-11"><b>Ich betreue Besucher</b>: Ich stehe für
-		Fragen zur Verfügung und mache etwas mit den Besuchern. At vero eos et accusam et justo duo dolores et ea rebum.</div>
+		<div class="col-xs-1"><p><span class="glyphicon glyphicon-record"></span>&nbsp;</p></div>
+		<div class="col-xs-11">
+			<p><b>Ich betreue Besucher</b>: Ich stehe für Fragen zur Verfügung und mache
+				etwas mit den Besuchern.
+			</p>
+		</div>
 	</div>
 	<div class="row">
-		<div class="col-xs-1"><span class="glyphicon glyphicon-log-out"></span>&nbsp;</div>
-		<div class="col-xs-11"><b>Ich schließe</b>: ich bin bis um 17 Uhr im
-		Lokschuppen, und schließe alles ab. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</div>
+		<div class="col-xs-1"><p><span class="glyphicon glyphicon-log-out"></span>&nbsp;</div>
+		<div class="col-xs-11">
+			<p><b>Ich schließe</b>: ich bin bis um 17 Uhr im Lokschuppen, und schließe
+				alles ab. Dazu gehört natürlich auch, das Schild aus dem Wald zu holen,
+				alles Fahrzeuge abzuschließen, den Außenstrom abzuschalten und den
+				Lokschuppen zuzusperren.
+			</p>
+		</div>
 	</div>
 </div>
