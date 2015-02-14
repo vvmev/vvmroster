@@ -5,9 +5,9 @@ from ReverseProxied import ReverseProxied
 import datetime
 import re
 import os
+import time
 
 import flask
-#from flask import Flask, abort, jsonify, session, redirect, render_template, request, url_for
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
 from flask.ext.security import Security, SQLAlchemyUserDatastore, \
@@ -208,7 +208,7 @@ def users(id=None):
 	if flask.request.method == 'POST':
 		roles = []
 		req = flask.request.get_json()
-		if 'admin_user' in req:
+		if 'admin_user' in req and req['admin_user']:
 			roles.append(admin_role)
 		try:
 			user = user_datastore.create_user(name=req['name'],
