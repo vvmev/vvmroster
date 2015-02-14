@@ -22,6 +22,7 @@ app = flask.Flask(__name__)
 app.wsgi_app = ReverseProxied(app.wsgi_app)
 db = SQLAlchemy(app)
 
+app.config['LOCALE'] = 'de_DE'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///roster.db'
 app.config['SECRET_KEY'] = 'developmentNotSoSecretKey'
 app.config['SECURITY_PASSWORD_HASH'] = 'sha512_crypt'

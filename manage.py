@@ -3,7 +3,6 @@
 
 import os
 import locale
-locale.setlocale(locale.LC_ALL, 'de_DE')
 
 from flask import Flask
 from flask.ext.script import Manager
@@ -19,6 +18,8 @@ elif os.path.exists(dev):
 	os.environ['VVMROSTER_APPLICATION_SETTINGS_PATH'] = dev
 
 import vvmroster
+
+locale.setlocale(locale.LC_ALL, vvmroster.app.config['LOCALE'])
 
 manager = Manager(vvmroster.app)
 mail = Mail(vvmroster.app)
