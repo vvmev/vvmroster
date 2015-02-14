@@ -13,6 +13,7 @@ from sqlalchemy.exc import IntegrityError
 from flask.ext.security import Security, SQLAlchemyUserDatastore, \
     UserMixin, RoleMixin, login_required, current_user
 from flask.ext.security.utils import encrypt_password, verify_password
+import sqlalchemy
 
 # https://github.com/miguelgrinberg/Flask-Runner
 # http://flask.pocoo.org/docs/0.10/deploying/mod_wsgi/
@@ -28,6 +29,16 @@ app.config['SECURITY_PASSWORD_SALT'] = 'developmentNotSoSecretKey'
 
 if 'VVMROSTER_APPLICATION_SETTINGS_PATH' in os.environ:
 	app.config.from_envvar('VVMROSTER_APPLICATION_SETTINGS_PATH')
+
+# activate foreign key constraints on SQLite
+@sqlalchemy.event.listens_for(sqlalchemy.engine.Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+	cursor = dbapi_connection.cursor()
+	try:
+		cursor.execute("PRAGMA foreign_keys=ON")
+	except:
+		pass
+	cursor.close()
 
 roles_users = db.Table('roles_users',
 		db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
