@@ -52,7 +52,7 @@ Der Dienstplaner
 	msg = Message(body=text,
 		subject="Verstärkung am Sonntag benötigt!",
 		sender="dienstplan@vvm.zs64.net", 
-		recipients=[vvmroster.app.config['NAG_EMAIL_RECIPIENT']])
+		recipients=vvmroster.app.config['NAG_EMAIL_RECIPIENTS'])
 	mail.send(msg)
 
 
