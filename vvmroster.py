@@ -9,7 +9,7 @@ import time
 
 import flask
 from flask.ext.sqlalchemy import SQLAlchemy
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import DatabaseError, IntegrityError
 from flask.ext.security import Security, SQLAlchemyUserDatastore, \
     UserMixin, RoleMixin, login_required, current_user
 from flask.ext.security.utils import encrypt_password, verify_password
@@ -171,6 +171,10 @@ def settings(id=None):
 	flask.abort(405)
 
 
+def dump(obj):
+	for attr in dir(obj):
+		print "obj.%s = %s" % (attr, getattr(obj, attr))
+
 @app.route('/api/users', methods=['GET', 'POST'])
 @app.route('/api/users/<id>', methods=['GET', 'PUT', 'DELETE'])
 def users(id=None):
@@ -196,8 +200,13 @@ def users(id=None):
 			json.append(u)
 		return flask.jsonify(items=json)
 	if flask.request.method == 'DELETE' and id:
-		db.session.delete(user)
-		db.session.commit()
+		try:
+			db.session.delete(user)
+			db.session.commit()
+		except DatabaseError as e:
+			response = flask.jsonify(ok=False, msg='Benutzer kann nicht gelöscht werden: ' + e.message)
+			response.status_code=409
+			return response
 		return flask.jsonify(ok=True)
 	if flask.request.method == 'PUT':
 		roles = []
@@ -215,6 +224,10 @@ def users(id=None):
 			response = flask.jsonify(ok=False, msg='Es gibt bereits einen Benutzer mit dieser Email (doppelter Datensatz)')
 			response.status_code=409
 			return response
+		except DatabaseError as e:
+			response = flask.jsonify(ok=False, msg='beim Speichern des Benutzers: ' + e.message)
+			response.status_code=409
+			return response
 		return flask.jsonify(ok=True, id=user.id)
 	if flask.request.method == 'POST':
 		roles = []
@@ -229,6 +242,10 @@ def users(id=None):
 			db.session.commit()
 		except IntegrityError:
 			response = flask.jsonify(ok=False, msg='Es gibt bereits einen Benutzer mit dieser Email (doppelter Datensatz)')
+			response.status_code=409
+			return response
+		except DatabaseError as e:
+			response = flask.jsonify(ok=False, msg='beim Speichern des Benutzers: ' + e.message)
 			response.status_code=409
 			return response
 		return flask.jsonify(ok=True, id=user.id)

@@ -325,104 +325,73 @@ roster.controller('AdminUsersController', function($scope, $modal, adminUsersRes
 			$scope.userentries = entries;
 		});
 	}
-	var user = {};
-	var modalAlerts = [];
-	var modalOpen = function() {
-		return $modal.open({
+	var useredit = function(user, action) {
+		var modalInstance = $modal.open({
 			templateUrl: 'useredit.html',
-			controller: 'UserEditModalController',
-			backdrop: 'static',
-			resolve: {
-				user: function() {
-					return user;
-				},
-				alerts: function() {
-					return modalAlerts;
-				}
-			}
-		})
-	};
-	var modalInstance = undefined;
-	var modalInstanceSave = function() {};
-	var modalInstanceThen = function(selectedItem) {
-		modalInstanceSave().then(function() {
+			controller: function($scope, $modalInstance) {
+				$scope.user = user;
+				$scope.alert = "";
+				$scope.buttonsDisabled = false;
+				$scope.ok = function() {
+					$scope.buttonsDisabled = true;
+					action().then(function() {
+						$modalInstance.close();
+					}, function(response) {
+						$scope.alert = response.data.msg;
+						$scope.buttonsDisabled = false;
+					});
+				};
+				$scope.cancel = function() {
+					$modalInstance.dismiss('cancel');
+				};
+			},
+		});
+		modalInstance.result.then(function() {
 			update();
-		}, function(response) {
-			modalAlerts = []
-			modalAlerts.push({msg: response.data.msg,
-				type: 'danger'});
-			console.log(response);
-			modalInstance = modalOpen();
-			modalInstance.result.then(modalInstanceThen);
 		});
 	};
 	$scope.useradd = function() {
-		user = {
+		var user = {
 			'id': undefined,
 			'name': '',
 			'email': '',
 			'password': '',
 			'admin_user': false,
-		}
-		modalAlerts = []
-		modalInstance = modalOpen();
-		modalInstanceSave = function() {
-			console.log(user);
+		};
+		useredit(user, function() {
 			return adminUsersRest.resource.post(user);
-		}
-		modalInstance.result.then(modalInstanceThen);
-	}
+		});
+	};
 	$scope.useredit = function(aUser) {
-		user = aUser.clone();
-		modalAlerts = []
-		modalInstance = modalOpen();
-		modalInstanceSave = function() {
+		var user = aUser.clone();
+		useredit(user, function() {
 			return user.put();
-		}
-		modalInstance.result.then(modalInstanceThen);
-	}
+		});
+	};
 	$scope.userdelete = function(user) {
 		var modalInstance = $modal.open({
 			templateUrl: 'userdelete.html',
-			controller: 'UserDeleteModalController',
-			user: user,
-			resolve: {
-				user: function() {
-					return user;
-				}
-			}
+			controller: function($scope, $modalInstance) {
+				$scope.user = user;
+				$scope.alert = "";
+				$scope.buttonsDisabled = false;
+				$scope.ok = function() {
+					$scope.buttonsDisabled = true;
+					user.remove().then(function() {
+						$modalInstance.close();
+					}, function(response) {
+						$scope.alert = response.data.msg;
+						$scope.buttonsDisabled = false;
+					});
+				};
+				$scope.cancel = function() {
+					$modalInstance.dismiss('cancel');
+				};
+			},
 		});
-		modalInstance.result.then(function(selectedItem) {
-			user.remove().then(function() {
-				update();
-			});
-		}, function() {
-			console.log("aborted");
+		modalInstance.result.then(function() {
+			update();
 		});
-	}
+	};
 	update();
-});
-roster.controller("UserEditModalController", function($scope, $modalInstance, user, alerts) {
-	$scope.user = user;
-	$scope.alerts = alerts;
-	$scope.ok = function() {
-		console.log("foo");
-		$modalInstance.close(0);
-	};
-	$scope.cancel = function() {
-		$modalInstance.dismiss('cancel');
-	};
-	$scope.closeAlert = function(index) {
-		$scope.alerts.splice(index, 1);
-	}
-});
-roster.controller("UserDeleteModalController", function($scope, $modalInstance, user) {
-	$scope.user = user;
-	$scope.selected = 0;
-	$scope.ok = function() {
-		$modalInstance.close();
-	};
-	$scope.cancel = function() {
-		$modalInstance.dismiss('cancel');
-	};
 });

@@ -46,8 +46,7 @@
 <script type="text/ng-template" id="useredit.html">
 	<div class="modal-header">
 		<h3>Benutzer bearbeiten</h3>
-		<alert ng-repeat="alert in alerts" type="{{alert.type}}"
-			close="closeAlert($index)"><b>Fehler!</b> {{alert.msg}}</alert>
+		<alert ng-if="alert" type="danger"><b>Fehler!</b> {{alert}}</alert>
 	</div>
 	<div class="modal-body">
 		<div class="row form-group">
@@ -73,20 +72,21 @@
 		</div>
 	</div>
 	<div class="modal-footer">
-		<button class="btn btn-default" ng-click="cancel()">Abbrechen</button>
-		<button class="btn btn-primary" ng-click="ok()">Speichern</button>
+		<button class="btn btn-default" ng-click="cancel()" ng-disabled="buttonsDisabled">Abbrechen</button>
+		<button class="btn btn-primary" ng-click="ok()" ng-disabled="buttonsDisabled">Speichern</button>
 	</div>
 </script>
 <script type="text/ng-template" id="userdelete.html">
 	<div class="modal-header">
 		<h3>Benutzer löschen</h3>
+		<alert ng-if="alert" type="danger"><b>Fehler!</b> {{alert}}</alert>
 	</div>
 	<div class="modal-body">
 		<b>Achtung!</b> Sind Sie sicher, dass Sie den Benutzer {{user.email}}
 		löschen möchten?
 	</div>
 	<div class="modal-footer">
-		<button class="btn btn-warning" ng-click="ok()">Löschen</button>
-		<button class="btn btn-default" ng-click="cancel()">Abbrechen</button>
+		<button class="btn btn-warning" ng-click="ok()" ng-disabled="buttonsDisabled">Löschen</button>
+		<button class="btn btn-default" ng-click="cancel()" ng-disabled="buttonsDisabled">Abbrechen</button>
 	</div>
 </script>
