@@ -3,6 +3,7 @@
 
 import os
 import locale
+import random
 
 from flask import Flask
 from flask.ext.script import Manager
@@ -55,6 +56,28 @@ Der Dienstplaner
 		recipients=vvmroster.app.config['NAG_EMAIL_RECIPIENTS'])
 	mail.send(msg)
 
+
+@manager.command
+def filldb():
+	"adds a bunch of users and roster entries"
+	random.seed()
+	admin_role = vvmroster.Role.query.filter_by(name='admin').first()
+	day = vvmroster.thisSunday()
+	for i in range(50):
+		user = vvmroster.user_datastore.create_user(name='User {}'.format(i),
+			email='user{}@example.com'.format(i),
+			password=vvmroster.encrypt_password('password'), roles=[])
+		r = vvmroster.Roster()
+		r.day = day
+		r.user = user
+		r.will_open = random.randint(0,1)
+		r.will_service = random.randint(0,1)
+		r.will_close = random.randint(0,1)
+		r.comment = ""
+		vvmroster.db.session.add(r)
+	vvmroster.db.session.commit()
+	
+	
 
 @manager.command
 def initdb():
