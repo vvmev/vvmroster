@@ -4,3 +4,4 @@ venv
 vvmroster.wsgi
 roster.db
 .DS_Store
+dev.cfg

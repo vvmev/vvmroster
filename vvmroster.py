@@ -26,6 +26,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///roster.db'
 app.config['SECRET_KEY'] = 'developmentNotSoSecretKey'
 app.config['SECURITY_PASSWORD_HASH'] = 'sha512_crypt'
 app.config['SECURITY_PASSWORD_SALT'] = 'developmentNotSoSecretKey'
+app.config['DEFAULT_MAIL_SENDER'] = 'VVM Dienstplan <vvm@zs64.net>'
 
 if 'VVMROSTER_APPLICATION_SETTINGS_PATH' in os.environ:
 	app.config.from_envvar('VVMROSTER_APPLICATION_SETTINGS_PATH')
@@ -80,6 +81,22 @@ class Roster(db.Model):
 	will_service = db.Column(db.Boolean)
 	will_close = db.Column(db.Boolean)
 	comment = db.Column(db.String(1000))
+	
+	@classmethod
+	def getCountsForSunday(self, day):
+		counts = {
+			'open': 0,
+			'service': 0,
+			'close': 0
+		}
+		for e in Roster.query.filter_by(day=day).all():
+			if e.will_open:
+				counts['open'] += 1
+			if e.will_service:
+				counts['service'] += 1
+			if e.will_close:
+				counts['close'] += 1
+		return counts
 
 	def __init__(self):
 		self.day = datetime.date.today()
@@ -105,6 +122,13 @@ def initdb():
 	db.session.commit()
 
 
+def thisSunday():
+	today = datetime.datetime.combine(datetime.date.today(), datetime.datetime.min.time())
+	# Sunday is the 6th day of the week
+	return today + datetime.timedelta(days=6-today.weekday())
+
+
+
 @app.route('/')
 @login_required
 def hello_world():
@@ -115,6 +139,7 @@ def hello_world():
 @app.route('/api/status/1')
 def status():
 	if current_user.is_authenticated():
+		sunday = thisSunday()
 		r = dict()
 		r['id'] = 1
 		r['logged_in'] = True
@@ -122,9 +147,6 @@ def status():
 		r['name'] = current_user.name
 		r['user_id'] = current_user.id
 		r['admin_user'] = current_user.has_role('admin')
-		today = datetime.datetime.combine(datetime.date.today(), datetime.datetime.min.time())
-		# Sonntag ist Wochentag 6, wir wollen 6 Sonntage
-		sunday = today + datetime.timedelta(days=6-today.weekday())
 		r['today'] = sunday.isoformat()
 		r['days'] = list((sunday + datetime.timedelta(days=i*7)).isoformat() for i in range(1,6))
 		status=[]
