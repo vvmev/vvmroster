@@ -224,6 +224,7 @@ def users(id=None):
 		return flask.jsonify(items=json)
 	if flask.request.method == 'DELETE' and id:
 		try:
+			Roster.query.filter_by(user=user).delete()
 			db.session.delete(user)
 			db.session.commit()
 		except DatabaseError as e:

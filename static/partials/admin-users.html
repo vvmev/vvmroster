@@ -82,8 +82,9 @@
 		<alert ng-if="alert" type="danger"><b>Fehler!</b> {{alert}}</alert>
 	</div>
 	<div class="modal-body">
-		<b>Achtung!</b> Sind Sie sicher, dass Sie den Benutzer {{user.email}}
-		löschen möchten?
+		<p><b>Achtung!</b> Sind Sie sicher, dass Sie den Benutzer {{user.email}}
+		löschen möchten?</p>
+		<p>Es werden auch alle Dienstmeldungen gelöscht, die dieser Benutzer eingereicht hat!</p>
 	</div>
 	<div class="modal-footer">
 		<button class="btn btn-warning" ng-click="ok()" ng-disabled="buttonsDisabled">Löschen</button>
