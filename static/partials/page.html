@@ -1,0 +1,45 @@
+	<nav class="navbar navbar-default" role="navigation" id="nav">
+		<div class="container">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle" ng-init="navCollapsed = true" ng-click="navCollapsed = !navCollapsed">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" ui-sref="page.today">Dienstplan Aumühle</a>
+			</div>
+			<div class="collapse navbar-collapse" ng-class="!navCollapsed && 'in'" ng-click="navCollapsed=true">
+				<ul class="nav navbar-nav">
+					<li ui-sref-active="active"><a ui-sref="page.today">{{status.today | date:'EEE d. MMM'}}</a></li>
+					<li class="dropdown" dropdown ng-class="{active: $state.includes('page.day')}">
+						<a class="dropdown-toggle" dropdown-toggle>Weitere Tage<span class="caret"></span></a>
+						<ul class="dropdown-menu" role="menu">
+							<li ng-repeat="day in status.days" ui-sref-active="active"><a ui-sref="page.day({day: day})">{{day | date:'EEE d. MMM'}}</a></li>
+						</ul>
+					</li>
+				</ul>
+				<!--p class="navbar-text navbar-right">Signed in as <a href="#" class="navbar-link">Mark Otto</a></p -->
+				<ul class="nav navbar-nav navbar-right">
+					<li ng-if='status.admin_user' ui-sref-active="active"><a
+					ui-sref="page.admin-users">Benutzer-Verwaltung</a></li>
+					<li class="dropdown" dropdown>
+						<a class="dropdown-toggle" dropdown-toggle><span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+						<span class="caret"></span><span class="sr-only">Benutzermenü</span></a>
+						<ul class="dropdown-menu" role="menu">
+							<li ui-sref-active="active"><a ui-sref="page.settings">Einstellungen</a></li>
+							<li><a href="logout">{{status.name}} abmelden</a></li>
+						</ul>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</nav>
+	<div id="page" class="container">
+		<div class="row top-buffer">
+			<div class="col-xs-8 col-xs-offset-2">
+				<div ui-view></div>
+				<div class="loading" ng-if="loading">Loading&#8230;</div>
+			</div>
+		</div>
+	</div>

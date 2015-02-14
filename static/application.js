@@ -18,21 +18,79 @@ roster.config(function(RestangularProvider) {
 roster.config(function($stateProvider, $urlRouterProvider) {
 	$urlRouterProvider.otherwise('/today');
 	$stateProvider
-		.state('today', {
+		.state('page', {
+			url: '',
+			templateUrl: 'static/partials/page.html',
+		})
+		.state('page.today', {
 			url: '/today',
 			templateUrl: 'static/partials/today.html',
+			controller: 'DayController',
+			resolve: {
+				rosterRest: function(Restangular, $filter, $rootScope) {
+					$rootScope.resolving = true;
+					var day = $rootScope.status.today;
+					var resource = Restangular.all('roster/' + $filter('date')(day, "yyyy-MM-dd'T'"));
+					return resource.getList().then(function(entries) {
+						$rootScope.resolving = false;
+						return {
+							day: day,
+							entries: entries,
+							resource: resource,
+						}
+					});
+				},
+			},
 		})
-		.state('day', {
+		.state('page.day', {
 			url: '/day/{day:[^/]*}',
 			templateUrl: 'static/partials/today.html',
+			controller: 'DayController',
+			resolve: {
+				rosterRest: function(Restangular, $filter, $stateParams) {
+					var day = $stateParams.day;
+					var resource = Restangular.all('roster/' + $filter('date')(day, "yyyy-MM-dd'T'"));
+					return resource.getList().then(function(entries) {
+						return {
+							day: day,
+							entries: entries,
+							resource: resource,
+						}
+					});
+				},
+			},
 		})
-		.state('settings', {
+		.state('page.settings', {
 			url: '/settings',
-			templateUrl: 'static/partials/settings.html'
+			templateUrl: 'static/partials/settings.html',
+			controller: 'SettingsController',
+			resolve: {
+				settingsRest: function(Restangular) {
+					var resource = Restangular.all('settings');
+					return resource.getList().then(function(entries) {
+						return {
+							entries: entries,
+							resource: resource,
+						}
+					});
+				},
+			},
 		})
-		.state('admin-users', {
+		.state('page.admin-users', {
 			url: '/admin-users',
-			templateUrl: 'static/partials/admin-users.html'
+			templateUrl: 'static/partials/admin-users.html',
+			controller: 'AdminUsersController',
+			resolve: {
+				adminUsersRest: function(Restangular) {
+					var resource = Restangular.all('users');
+					return resource.getList().then(function(entries) {
+						return {
+							entries: entries,
+							resource: resource,
+						}
+					});
+				},
+			},
 		});
 });
 /*
@@ -50,12 +108,16 @@ roster.run(function($state, $rootScope, $urlRouter, $log) {
 				return;
 			}
 			console.log("redirecting to home view");
-			$state.go('/today');
+			$state.transitionTo('page.today');
 		}
 	});
 });
 
 
+/*
+ * Controller for the main application view; the view shows the navigation. All actual
+ * functionality is contained in the subviews.
+ */
 roster.controller('MainController', function(Restangular, $scope, $rootScope, $state, $timeout) {
 	var resource = Restangular.all('status');
 	var updateTimeout;
@@ -70,24 +132,51 @@ roster.controller('MainController', function(Restangular, $scope, $rootScope, $s
 			$scope.status = items[0];
 			$rootScope.status = items[0];
 			startUpdateTimer();
+			if ($state.current.name == '' || $state.is('') || $state.is('page')) {
+				$state.transitionTo('page.today');
+			}
 		});
 	};
+	/*
+	 * On state transitions, show a spinner while the state is resolved.  The spinner
+	 * is shown only after 1/4s to avoid unnecessary flickering.
+	 */
+	var spinnerTimer;
+	var spinnerTimerStart = function() {
+		if (spinnerTimer) {
+			$timeout.cancel(spinnerTimer);
+		}
+		spinnerTimer = $timeout(function() {
+			$rootScope.loading = true;
+		}, 250);
+	}
+	$scope.$on('$stateChangeStart', function(event, toState, toParams, fromState, fromParams) {
+		if (toState.resolve) {
+			spinnerTimerStart();
+		}
+	});
+	$scope.$on('$stateChangeSuccess', function(event, toState, toParams, fromState, fromParams) {
+		if (toState.resolve) {
+			if (spinnerTimer) {
+				$timeout.cancel(spinnerTimer);
+			}
+			$rootScope.loading = false;
+		}
+	});
 	update();
 });
 
 
-roster.controller("DayController", function(Restangular, $scope, $rootScope, $stateParams, $filter, $timeout) {
-	$scope.loading = true;
-	$scope.day = $rootScope.status.today;
-	if ($stateParams.day) {
-		$scope.day = $stateParams.day;
-	}
+/*
+ * Display and allow adding to the roster for a particular day.
+ */
+roster.controller('DayController', function($scope, $rootScope, $timeout, rosterRest) {
+	$scope.day = rosterRest.day;
 	$scope.will_sums = {
 		will_open: 0,
 		will_service: 0,
 		will_close: 0,
 	}
-	var resource = Restangular.all('roster/' + $filter('date')($scope.day, "yyyy-MM-dd'T'"));
 	var updateCounts = function() {
 		$scope.will_sums.will_open = 0;
 		$scope.will_sums.will_service = 0;
@@ -108,37 +197,36 @@ roster.controller("DayController", function(Restangular, $scope, $rootScope, $st
 		if (e.will_close)
 			$scope.will_sums.will_close++;
 	}
-	var update = function() {
-		resource.getList().then(function(entries){
-			$scope.myself = {
-				name: $rootScope.status.name,
-				user_id: $rootScope.status.user_id,
-				will_open: false,
-				will_service: false,
-				will_close: false,
-				comment: '',
-				id: undefined
-			}
-			$scope.rosterentries = [];
-			entries.map(function(e) {
-				if (e.user_id == $rootScope.status.user_id) {
-					$scope.myself = e;
-				} else {
-					if (e.will_open || e.will_service || e.will_close ||
-							e.comment != '') {
-						$scope.rosterentries.push(e);
-					}
+	var processEntries = function(entries) {
+		$scope.myself = {
+			name: $rootScope.status.name,
+			user_id: $rootScope.status.user_id,
+			will_open: false,
+			will_service: false,
+			will_close: false,
+			comment: '',
+			id: undefined
+		}
+		$scope.rosterentries = [];
+		entries.map(function(e) {
+			if (e.user_id == $rootScope.status.user_id) {
+				$scope.myself = e;
+			} else {
+				if (e.will_open || e.will_service || e.will_close ||
+						e.comment != '') {
+					$scope.rosterentries.push(e);
 				}
-			});
-			updateCounts();
-			$scope.$watch('myself.will_open', debounceUpdate);
-			$scope.$watch('myself.will_service', debounceUpdate);
-			$scope.$watch('myself.will_close', debounceUpdate);
-			$scope.$watch('myself.comment', debounceUpdate);
-		}).finally(function(){
-			$scope.loading = false;
-			startUpdateTimer();
+			}
 		});
+		updateCounts();
+		$scope.$watch('myself.will_open', debounceUpdate);
+		$scope.$watch('myself.will_service', debounceUpdate);
+		$scope.$watch('myself.will_close', debounceUpdate);
+		$scope.$watch('myself.comment', debounceUpdate);
+			startUpdateTimer();
+	}
+	var update = function() {
+		rosterRest.resource.getList().then(processEntries);
 	}
 	$scope.update = update;
 	$scope.save = function() {
@@ -146,7 +234,7 @@ roster.controller("DayController", function(Restangular, $scope, $rootScope, $st
 		if (entry.id) {
 			entry.put();
 		} else {
-			resource.post(entry).then(function() {
+			rosterRest.resource.post(entry).then(function() {
 				update();
 			});
 		}
@@ -160,7 +248,7 @@ roster.controller("DayController", function(Restangular, $scope, $rootScope, $st
 	};
 	var debounceTimeout;
 	var debounceUpdate = function(newVal, oldVal, scope) {
-		if ($scope.loading || newVal === oldVal) {
+		if (newVal === oldVal) {
 			return;
 		}
 		updateCounts();
@@ -170,14 +258,17 @@ roster.controller("DayController", function(Restangular, $scope, $rootScope, $st
 		debounceTimeout = $timeout($scope.save, 1000);
 		startUpdateTimer();
 	};
-	update();
+	processEntries(rosterRest.entries);
 });
 
 
-roster.controller('SettingsController', function(Restangular, $scope, $modal) {
-	var resource = Restangular.all('settings');
+/*
+ * Allow users to change their password and certain other settings.
+ */
+roster.controller('SettingsController', function($scope, $modal, settingsRest) {
+	$scope.user = settingsRest.entries[0];
 	$scope.update = function() {
-		resource.getList().then(function(entries) {
+		settingsRest.resource.getList().then(function(entries) {
 			$scope.user = entries[0];
 		});
 	}
@@ -212,7 +303,7 @@ roster.controller('SettingsController', function(Restangular, $scope, $modal) {
 			if (passwords.new1 != passwords.new2) {
 				modalOpen('Die beiden neuen Passwörter müssen übereinstimmen.');
 			}
-			resource.post(passwords).then(function() {
+			settingsRest.resource.post(passwords).then(function() {
 			}, function(response) {
 				modalOpen(response.data.msg);
 				modalInstance.result.then(modalThen);
@@ -221,14 +312,16 @@ roster.controller('SettingsController', function(Restangular, $scope, $modal) {
 		modalOpen('');
 		modalInstance.result.then(modalThen);
 	}
-	$scope.update();
 });
 
 
-roster.controller("AdminUsersController", function(Restangular, $scope, $modal) {
-	var resource = Restangular.all('users');
+/*
+ * Admins can create, update, and delete users.
+ */
+roster.controller('AdminUsersController', function($scope, $modal, adminUsersRest) {
+	$scope.userentries = adminUsersRest.entries;
 	var update = function() {
-		resource.getList().then(function(entries) {
+		adminUsersRest.resource.getList().then(function(entries) {
 			$scope.userentries = entries;
 		});
 	}
@@ -274,7 +367,8 @@ roster.controller("AdminUsersController", function(Restangular, $scope, $modal) 
 		modalAlerts = []
 		modalInstance = modalOpen();
 		modalInstanceSave = function() {
-			return resource.post(user);
+			console.log(user);
+			return adminUsersRest.resource.post(user);
 		}
 		modalInstance.result.then(modalInstanceThen);
 	}
@@ -299,7 +393,6 @@ roster.controller("AdminUsersController", function(Restangular, $scope, $modal) 
 			}
 		});
 		modalInstance.result.then(function(selectedItem) {
-			console.log("delete " + user.email);
 			user.remove().then(function() {
 				update();
 			});
@@ -309,7 +402,7 @@ roster.controller("AdminUsersController", function(Restangular, $scope, $modal) 
 	}
 	update();
 });
-roster.controller("UserEditModalController", function(Restangular, $scope, $modalInstance, user, alerts) {
+roster.controller("UserEditModalController", function($scope, $modalInstance, user, alerts) {
 	$scope.user = user;
 	$scope.alerts = alerts;
 	$scope.ok = function() {
@@ -323,7 +416,7 @@ roster.controller("UserEditModalController", function(Restangular, $scope, $moda
 		$scope.alerts.splice(index, 1);
 	}
 });
-roster.controller("UserDeleteModalController", function(Restangular, $scope, $modalInstance, user) {
+roster.controller("UserDeleteModalController", function($scope, $modalInstance, user) {
 	$scope.user = user;
 	$scope.selected = 0;
 	$scope.ok = function() {
