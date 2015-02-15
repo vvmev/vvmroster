@@ -14,6 +14,7 @@ from flask.ext.security import Security, SQLAlchemyUserDatastore, \
     UserMixin, RoleMixin, login_required, current_user
 from flask.ext.security.utils import encrypt_password, verify_password
 import sqlalchemy
+from sqlalchemy.sql import func
 
 # https://github.com/miguelgrinberg/Flask-Runner
 # http://flask.pocoo.org/docs/0.10/deploying/mod_wsgi/
@@ -32,9 +33,11 @@ app.config['DEFAULT_MAIL_SENDER'] = 'VVM Dienstplan <vvm@zs64.net>'
 if 'VVMROSTER_APPLICATION_SETTINGS_PATH' in os.environ:
 	app.config.from_envvar('VVMROSTER_APPLICATION_SETTINGS_PATH')
 
-# activate foreign key constraints on SQLite
 @sqlalchemy.event.listens_for(sqlalchemy.engine.Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
+	'''
+	Enable foreign key constraints in SQLite.
+	'''
 	cursor = dbapi_connection.cursor()
 	try:
 		cursor.execute("PRAGMA foreign_keys=ON")
@@ -47,6 +50,9 @@ roles_users = db.Table('roles_users',
 		db.Column('role_id', db.Integer(), db.ForeignKey('role.id')))
 
 class Role(db.Model, RoleMixin):
+	'''
+	Standard Flask-Security role model
+	'''
 	id = db.Column(db.Integer(), primary_key=True)
 	name = db.Column(db.String(80), unique=True)
 	description = db.Column(db.String(255))
@@ -56,6 +62,9 @@ class Role(db.Model, RoleMixin):
 		return self.name
 
 class User(db.Model, UserMixin):
+	'''
+	User model based on the Flask Security example.
+	'''
 	id = db.Column(db.Integer, primary_key=True)
 	name = db.Column(db.String(255))
 	email = db.Column(db.String(255), unique=True)
@@ -74,30 +83,61 @@ security = Security(app, user_datastore)
 
 
 class Roster(db.Model):
+	'''
+	Model to store roster entries.  The day and the user are the composite primary key.
+	'''
 	__tablename__ = 'roster'
 	day = db.Column(db.DateTime, primary_key=True)
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
 	user = db.relationship('User')
-	will_open = db.Column(db.Boolean)
-	will_service = db.Column(db.Boolean)
-	will_close = db.Column(db.Boolean)
+	will_open = db.Column(db.Integer)
+	will_service = db.Column(db.Integer)
+	will_close = db.Column(db.Integer)
 	comment = db.Column(db.String(1000))
 	
 	@classmethod
-	def getCountsForSunday(self, day):
-		counts = {
-			'open': 0,
-			'service': 0,
-			'close': 0
-		}
-		for e in Roster.query.filter_by(day=day).all():
-			if e.will_open:
-				counts['open'] += 1
-			if e.will_service:
-				counts['service'] += 1
-			if e.will_close:
-				counts['close'] += 1
-		return counts
+	def getCountsForSundays(self, days=None, filled=None):
+		"""
+		Returns a report for specified days including the sums of volunteers.  If
+		days is not specified, all dates for which entries exist are returned.  If
+		filled is specified, the report will include a result for every specified date,
+		even if the roster does not contain any entries for it.  Filled defaults to True
+		if days are specified, False otherwise.
+		Returns an array of dicts.
+		"""
+		if days and filled == None:
+			filled = True
+		query = db.session.query(self.day,
+			func.sum(self.will_open).label('sum_open'),
+			func.sum(self.will_service).label('sum_service'),
+			func.sum(self.will_close).label('sum_close'),
+			)
+		if days:
+			query = query.filter(self.day.in_(days))
+		query = query.group_by(self.day).order_by(self.day)
+		result = []
+		rows = query.all()
+		print len(days)
+		for row in rows:
+			result.append(row._asdict())
+		if filled:
+			if days == None:
+				raise ValueError("when filling, days need to be specified")
+			filledResult = []
+			for day in days:
+				for r in result:
+					if r['day'] == day:
+						filledResult.append(r)
+						break
+				else:
+					filledResult.append({
+						'day': day,
+						'sum_open': 0,
+						'sum_service': 0,
+						'sum_close': 0,
+					})
+			return filledResult
+		return result
 
 	def __init__(self):
 		self.day = datetime.date.today()
@@ -107,10 +147,16 @@ class Roster(db.Model):
 		self.comment = ''
 
 	def __repr__(self):
-		return '<Roster {:d} {}>'.format(self.id, self.member_name)
+		return '<Roster {} {}>'.format(self.day, self.user.email)
 
 @app.before_first_request
+def before_first_request():
+	initdb()
+
 def initdb():
+	'''
+	Fill in a minimum of data on a virgin database.
+	'''
 	db.create_all()
 	admin_role = Role.query.filter_by(name='admin').first()
 	if admin_role == None:
@@ -124,10 +170,19 @@ def initdb():
 
 
 def thisSunday():
+	'''
+	Returns the upcoming Sunday, including on that Sunday itself.
+	'''
 	today = datetime.datetime.combine(datetime.date.today(), datetime.datetime.min.time())
 	# Sunday is the 6th day of the week
 	return today + datetime.timedelta(days=6-today.weekday())
 
+def currentSundays():
+	'''
+	Returns a list of upcoming Sundays.
+	'''
+	sunday = thisSunday()
+	return list((sunday + datetime.timedelta(days=i*7)) for i in range(6))
 
 
 @app.route('/')
@@ -139,6 +194,10 @@ def hello_world():
 @app.route('/api/status')
 @app.route('/api/status/1')
 def status():
+	'''
+	API that returns status information for the currently logged in user, including a list
+	of Sundays to display in the front-end, with their roster counts attached.
+	'''
 	if current_user.is_authenticated():
 		sunday = thisSunday()
 		r = dict()
@@ -149,16 +208,23 @@ def status():
 		r['user_id'] = current_user.id
 		r['admin_user'] = current_user.has_role('admin')
 		r['today'] = sunday.isoformat()
-		r['days'] = list((sunday + datetime.timedelta(days=i*7)).isoformat() for i in range(1,6))
-		status=[]
-		status.append(r)
-		return flask.jsonify(items=status)
+		r['days'] = [day.isoformat() for day in currentSundays()[1:]]
+		r['day_status'] = dict()
+		for c in Roster.getCountsForSundays(currentSundays()):
+			c['day'] = c['day'].isoformat()
+			c['count'] = min(c['sum_open'], c['sum_close'])
+			r['day_status'][c['day']] = c
+		return flask.jsonify(items=[r])
 	return flask.jsonify(logged_in=False)
 
 
 @app.route('/api/settings', methods=['POST', 'GET'])
 @app.route('/api/settings/<id>', methods=['GET', 'PUT', 'POST'])
 def settings(id=None):
+	'''
+	API that returns and stores user settings, including user name, email, and
+	password.
+	'''
 	if not current_user.is_authenticated():
 		flask.abort(403)
 	user = current_user
@@ -194,13 +260,13 @@ def settings(id=None):
 	flask.abort(405)
 
 
-def dump(obj):
-	for attr in dir(obj):
-		print "obj.%s = %s" % (attr, getattr(obj, attr))
-
 @app.route('/api/users', methods=['GET', 'POST'])
 @app.route('/api/users/<id>', methods=['GET', 'PUT', 'DELETE'])
 def users(id=None):
+	'''
+	API that allows creating, reading, updating and deleting users.  The logged in
+	user needs to habe the admin role.
+	'''
 	if not current_user.is_authenticated():
 		flask.abort(403)
 	if not current_user.has_role('admin'):
@@ -279,6 +345,11 @@ def users(id=None):
 @app.route('/api/roster/<day>', methods=['GET', 'POST'])
 @app.route('/api/roster/<day>/<int:id>', methods=['PUT'])
 def rosterentries(day, id=None):
+	'''
+	API that allows creating, reading and updating roster entries.  Deleting is not
+	implemented.  To create or update entries for a different user than the currently
+	logged in user, the user needs to have the admin role.
+	'''
 	if not current_user.is_authenticated():
 		flask.abort(403)
 	if not day:
@@ -296,9 +367,9 @@ def rosterentries(day, id=None):
 				'member': result.user.name,
 				'user_id': result.user.id,
 				'id': result.user.id,
-				'will_open': result.will_open,
-				'will_service': result.will_service,
-				'will_close': result.will_close,
+				'will_open': result.will_open != 0,
+				'will_service': result.will_service != 0,
+				'will_close': result.will_close != 0,
 				'comment': result.comment
 				}
 			json_results.append(d)
@@ -310,10 +381,11 @@ def rosterentries(day, id=None):
 		r = Roster()
 		r.day = day;
 		r.user = User.query.get(req['user_id'])
-		r.will_open =    req['will_open']
-		r.will_service = req['will_service']
-		r.will_close =   req['will_close']
+		r.will_open =    int(req['will_open'])
+		r.will_service = int(req['will_service'])
+		r.will_close =   int(req['will_close'])
 		r.comment = req['comment']
+		print r.will_service
 		db.session.add(r)
 		db.session.commit()
 		return flask.jsonify(ok=True)
@@ -322,11 +394,11 @@ def rosterentries(day, id=None):
 		if id != current_user.id and not current_user.has_role('admin'):
 			flask.abort(403)
 		r = Roster.query.filter_by(day=day, user_id=id).first()
-		r.will_open =    req['will_open']
-		r.will_service = req['will_service']
-		r.will_close =   req['will_close']
+		r.will_open =    int(req['will_open'])
+		r.will_service = int(req['will_service'])
+		r.will_close =   int(req['will_close'])
 		r.comment = req['comment']
-		print "committing"
+		print r.will_service
 		db.session.commit()
 		return flask.jsonify(ok=True)
 	flask.abort(405)

@@ -125,7 +125,7 @@ roster.controller('MainController', function(Restangular, $scope, $rootScope, $s
 		if (updateTimeout) {
 			$timeout.cancel(updateTimeout);
 		}
-		updateTimeout = $timeout(update, 15*60*1000);
+		updateTimeout = $timeout(update, 1*60*1000);
 	}
 	var update = function() {
 		resource.get(1).then(function(items) {
@@ -137,6 +137,14 @@ roster.controller('MainController', function(Restangular, $scope, $rootScope, $s
 			}
 		});
 	};
+	$rootScope.updateStatus = update;
+	$rootScope.badgeClass = function(count) {
+		if (count >= 2)
+			return 'badge-success';
+		if (count == 1)
+			return 'badge-warning';
+		return 'badge-danger';
+	}
 	/*
 	 * On state transitions, show a spinner while the state is resolved.  The spinner
 	 * is shown only after 1/4s to avoid unnecessary flickering.
@@ -232,10 +240,13 @@ roster.controller('DayController', function($scope, $rootScope, $timeout, roster
 	$scope.save = function() {
 		entry = $scope.myself;
 		if (entry.id) {
-			entry.put();
+			entry.put().then(function() {
+				$rootScope.updateStatus();
+			});
 		} else {
 			rosterRest.resource.post(entry).then(function() {
 				update();
+				$rootScope.updateStatus();
 			});
 		}
 	}

@@ -28,6 +28,23 @@ body {
 	width: 10em;
 }
 
+/* fix baseline alignment of glyphicons */
+span.glyphicon {
+    vertical-align: middle;
+    margin-top: -5px;
+}
+
+/* badges with different background color */
+.badge-danger {
+	background-color: #c00;
+}
+.badge-warning {
+	background-color: #cc0;
+}
+.badge-success {
+	background-color: #0c0;
+}
+
 
 /* Absolute Center CSS Spinner */
 .loading {
