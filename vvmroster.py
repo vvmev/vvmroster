@@ -119,7 +119,12 @@ class Roster(db.Model):
 		rows = query.all()
 		print len(days)
 		for row in rows:
-			result.append(row._asdict())
+			d = row._asdict()
+			# workaround for MySQL returning Decimal which jsonify doesn't grok
+			d['sum_open'] = int(d['sum_open'])
+			d['sum_service'] = int(d['sum_service'])
+			d['sum_close'] = int(d['sum_close'])
+			result.append(d)
 		if filled:
 			if days == None:
 				raise ValueError("when filling, days need to be specified")
