@@ -92,6 +92,13 @@ def getsums():
 
 
 @manager.command
+def deleteOld():
+	"deletes roster entries older than the current Sunday"
+	query = vvmroster.Roster.query.filter(vvmroster.Roster.day < vvmroster.thisSunday())
+	print "deleted {:d} rows".format(query.delete())
+
+
+@manager.command
 def initdb():
 	"creates the database and fills it with some demo data"
 	vvmroster.initdb()
