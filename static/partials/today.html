@@ -1,15 +1,59 @@
 <div>
 	<div class="row">
-		<div class="col-xs-11">
+		<div class="col-xs-12">
 			<h2>Dienstplan für {{day | date:"EEEE', den 'd.M.yyyy" }}</h3>
-		</div>
-		<div class="col-xs-1">
-			<!--<h3><button class="btn btn-default" ng-click="update()"><span class="glyphicon glyphicon-refresh"></span></button></h3>-->
 		</div>
 	</div>
 	<div class="row">
 		<div class="col-xs-12">
-			<p>In der folgenden Tabelle seht ihr, wer an diesem Tag in Aumühle anwesend
+			<div ng-show="loading" class="well">Daten werden geladen...</div>
+			<table class="table table-striped table-hover table-condensed" ng-hide="loading">
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th><span class="glyphicon glyphicon-log-in"></span>&nbsp;
+							<span class="badge">{{will_sums.will_open}}</span></th>
+						<th><span class="glyphicon glyphicon-record"></span>
+							<span class="badge">{{will_sums.will_service}}</span></th>
+						<th><span class="glyphicon glyphicon-log-out"></span>
+							<span class="badge">{{will_sums.will_close}}</span></th>
+						<th>Kommentar</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr ng-repeat="entry in rosterentries">
+						<td>{{ entry.member }}</td>
+						<td><span class="glyphicon" ng-class="{'glyphicon-ok': entry.will_open}"></span></td>
+						<td><span class="glyphicon" ng-class="{'glyphicon-ok': entry.will_service}"></span></td>
+						<td><span class="glyphicon" ng-class="{'glyphicon-ok': entry.will_close}"></span></td>
+						<td>{{ entry.comment }}</td>
+					</tr>
+					<tr class="success">
+						<td>{{ status.name }}</td>
+						<td><input type="checkbox" name="will_open" ng-model="myself.will_open" class="input-xlarge"></td>
+						<td><input type="checkbox" name="will_open" ng-model="myself.will_service" class="input-xlarge"></td>
+						<td><input type="checkbox" name="will_open" ng-model="myself.will_close" class="input-xlarge"></td>
+						<td><input type="text" name="name" ng-model="myself.comment" placeholder="Ich mache heute..." class="input-xlarge"></td>
+					</tr>
+				</tbody>
+				<tfoot>
+					<tr>
+						<td><b>Summe Zusagen</b></td>
+						<td><span class="glyphicon glyphicon-log-in"></span>&nbsp;
+							<span class="badge">{{will_sums.will_open}}</span></td>
+						<td><span class="glyphicon glyphicon-record"></span>
+							<span class="badge">{{will_sums.will_service}}</span></td>
+						<td><span class="glyphicon glyphicon-log-out"></span>
+							<span class="badge">{{will_sums.will_close}}</span></td>
+						<td></td>
+					</tr>
+				</tfoot>
+			</table>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-xs-12">
+			<p>In der Tabelle seht ihr, wer an diesem Tag in Aumühle anwesend
 				sein möchte, und welche Aufgaben er übernehmen will. In der letzten,
 				grünen Zeile seid ihr schon vorgemerkt. Kreuzt einfach an, ob ihr zum
 				Öffnen um 11 Uhr da seid, ob ihr euch um Besucher kümmern wollt, und ob
@@ -24,46 +68,6 @@
 				jederzeit wieder ändern. Solltet ihr zunächst zugesagt haben, jetzt aber
 				kurzfristig verhindert sein, ist ein Kommentar für die Kollegen
 				hilfreich.</p>
-		</div>
-	</div>
-	<div class="row">
-		<div class="col-xs-12">
-			<div ng-show="loading" class="well">Daten werden geladen...</div>
-			<table class="table table-striped table-hover table-condensed" ng-hide="loading">
-				<thead>
-				<tr>
-					<th>Name</th>
-					<th><span class="glyphicon glyphicon-log-in"></span>&nbsp;</th>
-					<th><span class="glyphicon glyphicon-record"></span>&nbsp;</th>
-					<th><span class="glyphicon glyphicon-log-out"></span>&nbsp;</th>
-					<th>Kommentar</th>
-				</tr>
-				</thead>
-				<tbody>
-				<tr ng-repeat="entry in rosterentries">
-					<td>{{ entry.member }}</td>
-					<td><span class="glyphicon" ng-class="{'glyphicon-ok': entry.will_open}"></span></td>
-					<td><span class="glyphicon" ng-class="{'glyphicon-ok': entry.will_service}"></span></td>
-					<td><span class="glyphicon" ng-class="{'glyphicon-ok': entry.will_close}"></span></td>
-					<td>{{ entry.comment }}</td>
-				</tr>
-				<tr class="success">
-					<td>{{ status.name }}</td>
-					<td><input type="checkbox" name="will_open" ng-model="myself.will_open" class="input-xlarge"></td>
-					<td><input type="checkbox" name="will_open" ng-model="myself.will_service" class="input-xlarge"></td>
-					<td><input type="checkbox" name="will_open" ng-model="myself.will_close" class="input-xlarge"></td>
-					<td><input type="text" name="name" ng-model="myself.comment" placeholder="Ich mache heute..." class="input-xlarge"></td>
-				</tr>
-				<tr>
-					<td><b>Summe Zusagen:</b></td>
-					<td><span class="badge">{{will_sums.will_open}}</span></td>
-					<td><span class="badge">{{will_sums.will_service}}</span></td>
-					<td><span class="badge">{{will_sums.will_close}}</span></td>
-					<td>
-</td>
-				</tr>
-				</tbody>
-			</table>
 		</div>
 	</div>
 	<div class="row">

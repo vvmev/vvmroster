@@ -36,10 +36,6 @@
 		</div>
 	</nav>
 	<div id="page" class="container">
-		<div class="row top-buffer">
-			<div class="col-xs-8 col-xs-offset-2">
-				<div ui-view></div>
-				<div class="loading" ng-if="loading">Loading&#8230;</div>
-			</div>
-		</div>
+		<div ui-view></div>
+		<div class="loading" ng-if="loading">Loading&#8230;</div>
 	</div>
