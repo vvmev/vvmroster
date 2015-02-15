@@ -104,10 +104,8 @@ roster.run(function($state, $rootScope, $urlRouter, $log) {
 	$rootScope.$on('$stateChangeStart', function(evt, toState, toStateParms) {
 		if (toState.name.slice(0, 'admin'.length) == 'admin') {
 			if ($rootScope.status && $rootScope.status.admin_user) {
-				console.log("admin view OK");
 				return;
 			}
-			console.log("redirecting to home view");
 			$state.transitionTo('page.today');
 		}
 	});
@@ -205,19 +203,30 @@ roster.controller('DayController', function($scope, $rootScope, $timeout, roster
 		if (e.will_close)
 			$scope.will_sums.will_close++;
 	}
+	$scope.myself = {
+		name: $rootScope.status.name,
+		user_id: $rootScope.status.user_id,
+		will_open: false,
+		will_service: false,
+		will_close: false,
+		comment: '',
+		id: undefined
+	}
 	var processEntries = function(entries) {
-		$scope.myself = {
-			name: $rootScope.status.name,
-			user_id: $rootScope.status.user_id,
-			will_open: false,
-			will_service: false,
-			will_close: false,
-			comment: '',
-			id: undefined
-		}
 		$scope.rosterentries = [];
 		entries.map(function(e) {
 			if (e.user_id == $rootScope.status.user_id) {
+				if ($scope.myself.id === undefined && debounceTimeout) {
+					/*
+					 * We're getting data from the server, but we have unsaved local
+					 * changes. Copy over the fields to the server object so it can be
+					 * saved.
+					 */
+					e.will_open =    $scope.myself.will_open;
+					e.will_service = $scope.myself.will_service;
+					e.will_close =   $scope.myself.will_close;
+					e.comment =      $scope.myself.comment;
+				}
 				$scope.myself = e;
 			} else {
 				if (e.will_open || e.will_service || e.will_close ||
@@ -226,12 +235,12 @@ roster.controller('DayController', function($scope, $rootScope, $timeout, roster
 				}
 			}
 		});
-		updateCounts();
 		$scope.$watch('myself.will_open', debounceUpdate);
 		$scope.$watch('myself.will_service', debounceUpdate);
 		$scope.$watch('myself.will_close', debounceUpdate);
 		$scope.$watch('myself.comment', debounceUpdate);
-			startUpdateTimer();
+		updateCounts();
+		startUpdateTimer();
 	}
 	var update = function() {
 		rosterRest.resource.getList().then(processEntries);
@@ -266,6 +275,10 @@ roster.controller('DayController', function($scope, $rootScope, $timeout, roster
 		if (debounceTimeout) {
 			$timeout.cancel(debounceTimeout);
 		}
+		if (!$scope.myself.id) {
+			// if we don't have an entry yet, create it asap
+			$scope.save();
+		}
 		debounceTimeout = $timeout($scope.save, 1000);
 		startUpdateTimer();
 	};
@@ -284,7 +297,9 @@ roster.controller('SettingsController', function($scope, $modal, settingsRest) {
 		});
 	}
 	$scope.save = function() {
-		$scope.user.put();
+		$scope.user.put().then(function(){
+			$rootScope.updateStatus();
+		});
 	}
 	$scope.changePassword = function() {
 		var passwords = {
@@ -310,7 +325,6 @@ roster.controller('SettingsController', function($scope, $modal, settingsRest) {
 			});
 		}
 		var modalThen = function() {
-			console.log("saving: " + passwords.old);
 			if (passwords.new1 != passwords.new2) {
 				modalOpen('Die beiden neuen Passwörter müssen übereinstimmen.');
 			}
