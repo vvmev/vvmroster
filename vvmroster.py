@@ -117,7 +117,6 @@ class Roster(db.Model):
 		query = query.group_by(self.day).order_by(self.day)
 		result = []
 		rows = query.all()
-		print len(days)
 		for row in rows:
 			d = row._asdict()
 			# workaround for MySQL returning Decimal which jsonify doesn't grok
@@ -244,7 +243,6 @@ def settings(id=None):
 		return flask.jsonify(items=json)
 	if flask.request.method == 'PUT':
 		req = flask.request.get_json()
-		print req
 		current_user.email = req['email']
 		current_user.name = req['name']
 		db.session.commit()
@@ -358,7 +356,6 @@ def rosterentries(day, id=None):
 	if not current_user.is_authenticated():
 		flask.abort(403)
 	if not day:
-		print "foo"
 		response = flask.jsonify(ok=False, msg='')
 		response.status_code = 404
 		return response
@@ -390,7 +387,6 @@ def rosterentries(day, id=None):
 		r.will_service = int(req['will_service'])
 		r.will_close =   int(req['will_close'])
 		r.comment = req['comment']
-		print r.will_service
 		db.session.add(r)
 		db.session.commit()
 		return flask.jsonify(ok=True)
@@ -403,7 +399,6 @@ def rosterentries(day, id=None):
 		r.will_service = int(req['will_service'])
 		r.will_close =   int(req['will_close'])
 		r.comment = req['comment']
-		print r.will_service
 		db.session.commit()
 		return flask.jsonify(ok=True)
 	flask.abort(405)
