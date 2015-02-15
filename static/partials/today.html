@@ -2,11 +2,12 @@
 	<div class="row">
 		<div class="col-xs-12">
 			<h2>Dienstplan für {{day | date:"EEEE', den 'd.M.yyyy" }}</h3>
+			<p>Einfach ankreuzen, wenn ihr kommt, oder leer lassen, wenn ihr nur schauen
+				wollt.</p>
 		</div>
 	</div>
 	<div class="row">
 		<div class="col-xs-12">
-			<div ng-show="loading" class="well">Daten werden geladen...</div>
 			<table class="table table-striped table-bordered table-hover table-condensed" ng-hide="loading">
 				<thead>
 					<tr>
@@ -59,11 +60,12 @@
 				Öffnen um 11 Uhr da seid, ob ihr euch um Besucher kümmern wollt, und ob
 				ihr ab 17 Uhr den Lokschuppen schließen werdet. Im Kommentarfeld könnt
 				ihr zusätzliche Hinweise geben, z. B. „Ich baue den Kaffeestand auf“,
-				oder „Kümmere mich um die Gruppe“. </p>
-			<p>Wenn ihr nicht kommen könnt, oder kommt, aber euch um etwas anderes als
-				die Besucher kümmern wollt oder müsst, lasst einfach das Kreuz bei
-				<span class="glyphicon glyphicon-record"></span> Betreuung weg; ihr 
-				braucht keine Begründung einzugeben.</p>
+				oder „Kümmere mich um die Gruppe“.</p>
+			<p>Wenn ihr nicht kommt, lasst einfach alles offen. Wenn ihr mögt, könnt ihr
+				natürlich gerne einen Kommentar eingeben.</p> 
+			<p>Wenn ihr kommt, aber euch um etwas anderes als die Besucher kümmern werdet,
+				lasst einfach das Kreuz bei <span class="glyphicon glyphicon-record"></span>
+				Betreuung weg; ihr braucht keine Begründung einzugeben.</p>
 			<p>Eure Eingaben werden automatisch gespeichert. Ihr könnt eure Eingabe
 				jederzeit wieder ändern. Solltet ihr zunächst zugesagt haben, jetzt aber
 				kurzfristig verhindert sein, ist ein Kommentar für die Kollegen
@@ -76,7 +78,7 @@
 		</div>
 	</div>
 	<div class="row">
-		<div class="col-xs-1"><p><span class="glyphicon glyphicon-log-in"></span>&nbsp;</p></div>
+		<div class="col-xs-1 text-center"><span class="glyphicon glyphicon-log-in"></span>&nbsp;</p></div>
 		<div class="col-xs-11">
 			<p><b>Ich öffne</b>: ich bin rechtzeitig da, damit der Lokschuppen um 11 Uhr
 				Besucher empfangen kann. Idealerweise gehören dazu alle Vorbereitungen
@@ -87,7 +89,7 @@
 		</div>
 	</div>
 	<div class="row">
-		<div class="col-xs-1"><p><span class="glyphicon glyphicon-record"></span>&nbsp;</p></div>
+		<div class="col-xs-1 text-center"><span class="glyphicon glyphicon-record"></span>&nbsp;</p></div>
 		<div class="col-xs-11">
 			<p><b>Ich betreue Besucher</b>: Ich stehe für Fragen zur Verfügung und mache
 				etwas mit den Besuchern.
@@ -95,12 +97,43 @@
 		</div>
 	</div>
 	<div class="row">
-		<div class="col-xs-1"><p><span class="glyphicon glyphicon-log-out"></span>&nbsp;</div>
+		<div class="col-xs-1 text-center"><span class="glyphicon glyphicon-log-out"></span>&nbsp;</div>
 		<div class="col-xs-11">
 			<p><b>Ich schließe</b>: ich bin bis um 17 Uhr im Lokschuppen, und schließe
 				alles ab. Dazu gehört natürlich auch, das Schild aus dem Wald zu holen,
 				alles Fahrzeuge abzuschließen, den Außenstrom abzuschalten und den
 				Lokschuppen zuzusperren.
+			</p>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-xs-1 text-center"><span class="badge badge-danger">0</span>&nbsp;</div>
+		<div class="col-xs-11">
+			<p><b>Keine Meldung (0)</b>: noch hat sich keiner gefunden, der die Aufgabe
+				übernehmen möchte.
+			</p>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-xs-1 text-center"><span class="badge badge-warning">1</span>&nbsp;</div>
+		<div class="col-xs-11">
+			<p><b>Eine Meldung</b>: einer ist besser als keiner!
+			</p>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-xs-1 text-center"><span class="badge badge-success">2</span></div>
+		<div class="col-xs-11">
+			<p><b>Mehrere Meldung</b>: mit zwei oder mehr Kollegen haben wir Sicherheit,
+				und die Arbeit geht leichter von der Hand.
+			</p>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-xs-1 text-center">&nbsp;</div>
+		<div class="col-xs-11">
+			<p><b>Oben im Menü</b> wird zusammengefasst dargestellt, wie viele Meldungen
+				für das Öffnen bzw. Schließen vorliegen; die kleinere Zahl wird verwendet.
 			</p>
 		</div>
 	</div>
