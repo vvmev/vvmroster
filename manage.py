@@ -11,7 +11,7 @@ from flask.ext.script import Manager
 from flask.ext.mail import Mail, Message
 from sqlalchemy.sql import func
 
-prod = '/var/www/dienstplan.vvm.zs64.net/wsgi/vvmroster/production.cfg'
+prod = '/var/www/vvm.hanse.de/wsgi/vvmroster/production.cfg'
 dev = os.getcwd() + '/dev.cfg'
 
 os.environ['VVMROSTER_APPLICATION_SETTINGS_PATH'] = '/dev/null'
@@ -45,7 +45,7 @@ von uns vor Ort sein. Die bisherigen Meldungen:
   Betreuen:  {counts[service]}
   Schließen: {counts[close]}
 
-Bitte meldet euch unter http://dienstplan.vvm.zs64.net/ an!
+Bitte meldet euch unter https://vvm.hanse.de/dienstplan an!
 
 Mit freundlichen Grüßen,
 Der Dienstplaner
