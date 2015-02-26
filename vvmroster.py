@@ -143,6 +143,7 @@ class Roster(db.Model):
 						'sum_open': 0,
 						'sum_service': 0,
 						'sum_close': 0,
+						'count': 0,
 					})
 			return filledResult
 		return result
