@@ -15,6 +15,7 @@ from flask.ext.security import Security, SQLAlchemyUserDatastore, \
 from flask.ext.security.utils import encrypt_password, verify_password
 import sqlalchemy
 from sqlalchemy.sql import func
+from sqlalchemy import or_
 
 # https://github.com/miguelgrinberg/Flask-Runner
 # http://flask.pocoo.org/docs/0.10/deploying/mod_wsgi/
@@ -111,7 +112,9 @@ class Roster(db.Model):
 			func.sum(self.will_open).label('sum_open'),
 			func.sum(self.will_service).label('sum_service'),
 			func.sum(self.will_close).label('sum_close'),
+			func.count(self.will_open).label('count'),
 			)
+		query = query.filter(or_(self.will_open > 0, self.will_service, self.will_close))
 		if days:
 			query = query.filter(self.day.in_(days))
 		query = query.group_by(self.day).order_by(self.day)
@@ -119,10 +122,11 @@ class Roster(db.Model):
 		rows = query.all()
 		for row in rows:
 			d = row._asdict()
-			# workaround for MySQL returning Decimal which jsonify doesn't grok
+			# int() workaround for MySQL returning Decimal which jsonify doesn't grok
 			d['sum_open'] = int(d['sum_open'])
 			d['sum_service'] = int(d['sum_service'])
 			d['sum_close'] = int(d['sum_close'])
+			d['count'] = int(d['count'])
 			result.append(d)
 		if filled:
 			if days == None:
@@ -216,7 +220,6 @@ def status():
 		r['day_status'] = dict()
 		for c in Roster.getCountsForSundays(currentSundays()):
 			c['day'] = c['day'].isoformat()
-			c['count'] = min(c['sum_open'], c['sum_close'])
 			r['day_status'][c['day']] = c
 		return flask.jsonify(items=[r])
 	return flask.jsonify(logged_in=False)
