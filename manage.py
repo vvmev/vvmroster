@@ -33,30 +33,37 @@ def sendNagMail():
 	"Sends out an email if the minimum number of volunteers has not been met"
 	day = vvmroster.thisSunday()
 	dayFormatted = day.strftime('%A, %d. %B')
-	counts = vvmroster.Roster.getCountsForSunday(day)
-	if counts['open'] >= 2 and counts['close'] >= 2:
+	counts = vvmroster.Roster.getCountsForSundays([day])
+	if counts[0]['count'] >= 1:
 		return
 	text = '''Liebe Kollegen,
 
 am kommenden {day} fehlt in Aumühle noch Unterstützung! Damit wir
 unseren Besuchern einen angenehmen Tag bereiten können, sollten mindestens zwei
 von uns vor Ort sein. Die bisherigen Meldungen:
-  Öffnen:    {counts[open]}
-  Betreuen:  {counts[service]}
-  Schließen: {counts[close]}
+  Öffnen:    {counts[sum_open]}
+  Betreuen:  {counts[sum_service]}
+  Schließen: {counts[sum_close]}
 
-Bitte meldet euch unter https://vvm.hanse.de/dienstplan an!
+Bitte meldet euch unter {url} an!
 
 Mit freundlichen Grüßen,
 Der Dienstplaner
 '''
-	text = text.format(day=dayFormatted, counts=counts)
+	text = text.format(day=dayFormatted, counts=counts[0],
+		url=vvmroster.url_for('index', _external=True))
 	#print text
 	msg = Message(body=text,
 		subject="Verstärkung am Sonntag benötigt!",
-		sender="dienstplan@vvm.zs64.net", 
+		sender="dienstplan@vvm.zs64.net",
+		reply_to="vvm-aumuehle@lists.hanse.de",
 		recipients=vvmroster.app.config['NAG_EMAIL_RECIPIENTS'])
 	mail.send(msg)
+
+
+@manager.command
+def printurl():
+	print vvmroster.url_for('index', _external=True)
 
 
 @manager.command

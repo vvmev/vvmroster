@@ -114,7 +114,7 @@ class Roster(db.Model):
 			func.sum(self.will_close).label('sum_close'),
 			func.count(self.will_open).label('count'),
 			)
-		query = query.filter(or_(self.will_open > 0, self.will_service, self.will_close))
+		query = query.filter(or_(self.will_open > 0, self.will_service > 0, self.will_close > 0))
 		if days:
 			query = query.filter(self.day.in_(days))
 		query = query.group_by(self.day).order_by(self.day)
@@ -162,6 +162,7 @@ class Roster(db.Model):
 def before_first_request():
 	initdb()
 
+
 def initdb():
 	'''
 	Fill in a minimum of data on a virgin database.
@@ -194,9 +195,13 @@ def currentSundays():
 	return list((sunday + datetime.timedelta(days=i*7)) for i in range(6))
 
 
+def url_for(fn, _external=True):
+	return flask.url_for(fn, _external=_external)
+
+
 @app.route('/')
 @login_required
-def hello_world():
+def index():
 	return flask.render_template('index.html')
 
 
