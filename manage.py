@@ -56,7 +56,7 @@ Der Dienstplaner
 	msg = Message(body=text,
 		subject="Verstärkung am Sonntag benötigt!",
 		sender="dienstplan@vvm.zs64.net",
-		reply_to="vvm-aumuehle@lists.hanse.de",
+		reply_to=vvmroster.app.config['NAG_EMAIL_REPLYTO'],
 		recipients=vvmroster.app.config['NAG_EMAIL_RECIPIENTS'])
 	mail.send(msg)
 
