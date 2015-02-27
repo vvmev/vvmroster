@@ -45,7 +45,9 @@ von uns vor Ort sein. Die bisherigen Meldungen:
   Betreuen:  {counts[sum_service]}
   Schließen: {counts[sum_close]}
 
-Bitte meldet euch unter {url} an!
+Wenn ihr am Sonntag unterstützen könnt, meldet euch bitte unter
+{url} an!
+
 
 Mit freundlichen Grüßen,
 Der Dienstplaner
@@ -54,8 +56,8 @@ Der Dienstplaner
 		url=vvmroster.url_for('index', _external=True))
 	#print text
 	msg = Message(body=text,
-		subject="Verstärkung am Sonntag benötigt!",
-		sender="dienstplan@vvm.zs64.net",
+		subject="Verstärkung am Sonntag in Aumühle benötigt!",
+		sender=vvmroster.app.config['DEFAULT_MAIL_SENDER'],
 		reply_to=vvmroster.app.config['NAG_EMAIL_REPLYTO'],
 		recipients=vvmroster.app.config['NAG_EMAIL_RECIPIENTS'])
 	mail.send(msg)
