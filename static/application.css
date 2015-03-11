@@ -28,6 +28,11 @@ body {
 	width: 10em;
 }
 
+span.checkbutton {
+	display: inline-block;
+	width: 1em;
+}
+
 /* fix baseline alignment of glyphicons */
 span.glyphicon {
     vertical-align: middle;

@@ -24,16 +24,22 @@
 				<tbody>
 					<tr ng-repeat="entry in rosterentries">
 						<td>{{ entry.member }}</td>
-						<td class="text-center">&nbsp;<span class="glyphicon" ng-class="{'glyphicon-ok': entry.will_open}">&nbsp;</span></td>
-						<td class="text-center">&nbsp;<span class="glyphicon" ng-class="{'glyphicon-ok': entry.will_service}">&nbsp;</span></td>
-						<td class="text-center">&nbsp;<span class="glyphicon" ng-class="{'glyphicon-ok': entry.will_close}">&nbsp;</span></td>
+						<td class="text-center">&nbsp;<span class="checkbutton glyphicon" ng-class="{'glyphicon-ok': entry.will_open}">&nbsp;</span></td>
+						<td class="text-center">&nbsp;<span class="checkbutton glyphicon" ng-class="{'glyphicon-ok': entry.will_service}">&nbsp;</span></td>
+						<td class="text-center">&nbsp;<span class="checkbutton glyphicon" ng-class="{'glyphicon-ok': entry.will_close}">&nbsp;</span></td>
 						<td>{{ entry.comment }}</td>
 					</tr>
 					<tr class="success">
 						<td>{{ status.name }}</td>
-						<td class="text-center"><input type="checkbox" name="will_open" ng-model="myself.will_open" class="input-xlarge"></td>
-						<td class="text-center"><input type="checkbox" name="will_open" ng-model="myself.will_service" class="input-xlarge"></td>
-						<td class="text-center"><input type="checkbox" name="will_open" ng-model="myself.will_close" class="input-xlarge"></td>
+						<td class="text-center">
+							<button type="button" class="btn btn-default" ng-model="myself.will_open" btn-checkbox>&nbsp;<span class="checkbutton glyphicon" ng-class="{'glyphicon-ok': myself.will_open}"></span></button>
+						</td>
+						<td class="text-center">
+							<button type="button" class="btn btn-default" ng-model="myself.will_service" btn-checkbox>&nbsp;<span class="checkbutton glyphicon" ng-class="{'glyphicon-ok': myself.will_service}"></span></button>
+						</td>
+						<td class="text-center">
+							<button type="button" class="btn btn-default" ng-model="myself.will_close" btn-checkbox>&nbsp;<span class="checkbutton glyphicon" ng-class="{'glyphicon-ok': myself.will_close}"></span></button>
+						</td>
 						<td><input type="text" name="name" ng-model="myself.comment" placeholder="Ich mache heute..." class="input-xlarge input-block-level"></td>
 					</tr>
 				</tbody>
