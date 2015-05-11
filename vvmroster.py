@@ -179,20 +179,28 @@ def initdb():
 	db.session.commit()
 
 
-def thisSunday():
+def upcomingDays():
 	'''
-	Returns the upcoming Sunday, including on that Sunday itself.
+	Returns a list of upcoming days for which we want to show entries.
 	'''
 	today = datetime.datetime.combine(datetime.date.today(), datetime.datetime.min.time())
 	# Sunday is the 6th day of the week
-	return today + datetime.timedelta(days=6-today.weekday())
+	sunday = today + datetime.timedelta(days=6-today.weekday())
+	sundays = list((sunday + datetime.timedelta(days=i*7)) for i in range(6))
+	alldays = sundays
+	# FIXME: store special days in the database
+	specialdays = []
+	specialdays.append(datetime.datetime(2015, 5, 14))
+	specialdays.append(datetime.datetime(2015, 5, 25))
+	alldays.extend(specialdays)
+	alldays.sort()
+	return alldays[0:5]
 
-def currentSundays():
+def currentDay():
 	'''
-	Returns a list of upcoming Sundays.
+	Returns the next day we're showing entries for.
 	'''
-	sunday = thisSunday()
-	return list((sunday + datetime.timedelta(days=i*7)) for i in range(6))
+	return upcomingDays()[0]
 
 
 def url_for(fn, _external=True):
@@ -213,7 +221,7 @@ def status():
 	of Sundays to display in the front-end, with their roster counts attached.
 	'''
 	if current_user.is_authenticated():
-		sunday = thisSunday()
+		sunday = currentDay()
 		r = dict()
 		r['id'] = 1
 		r['logged_in'] = True
@@ -222,9 +230,9 @@ def status():
 		r['user_id'] = current_user.id
 		r['admin_user'] = current_user.has_role('admin')
 		r['today'] = sunday.isoformat()
-		r['days'] = [day.isoformat() for day in currentSundays()[1:]]
+		r['days'] = [day.isoformat() for day in upcomingDays()[1:]]
 		r['day_status'] = dict()
-		for c in Roster.getCountsForSundays(currentSundays()):
+		for c in Roster.getCountsForSundays(upcomingDays()):
 			c['day'] = c['day'].isoformat()
 			r['day_status'][c['day']] = c
 		return flask.jsonify(items=[r])

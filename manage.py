@@ -31,7 +31,7 @@ mail = Mail(vvmroster.app)
 @manager.command
 def sendNagMail():
 	"Sends out an email if the minimum number of volunteers has not been met"
-	day = vvmroster.thisSunday()
+	day = vvmroster.currentDay()
 	dayFormatted = day.strftime('%A, %d. %B')
 	counts = vvmroster.Roster.getCountsForSundays([day])
 	if counts[0]['count'] >= 1:
@@ -74,7 +74,7 @@ def filldb():
 	vvmroster.initdb()
 	random.seed()
 	admin_role = vvmroster.Role.query.filter_by(name='admin').first()
-	sunday = vvmroster.thisSunday()
+	sunday = vvmroster.currentDay()
 	for i in range(50):
 		user = vvmroster.user_datastore.create_user(name='User {}'.format(i),
 			email='user{}@example.com'.format(i),
@@ -96,14 +96,14 @@ def filldb():
 def getsums():
 	"gets some sums from the roster"
 
-	for r in vvmroster.Roster.getCountsForSundays(days=vvmroster.currentSundays()):
+	for r in vvmroster.Roster.getCountsForSundays(days=vvmroster.upcomingDays()):
 		print r
 
 
 @manager.command
 def deleteOld():
 	"deletes roster entries older than the current Sunday"
-	query = vvmroster.Roster.query.filter(vvmroster.Roster.day < vvmroster.thisSunday())
+	query = vvmroster.Roster.query.filter(vvmroster.Roster.day < vvmroster.currentDay())
 	print "deleted {:d} rows".format(query.delete())
 
 
