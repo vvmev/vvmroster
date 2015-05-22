@@ -192,7 +192,7 @@ def upcomingDays():
 	specialdays = []
 	specialdays.append(datetime.datetime(2015, 5, 14))
 	specialdays.append(datetime.datetime(2015, 5, 25))
-	alldays.extend(specialdays)
+	#alldays.extend(specialdays)
 	alldays.sort()
 	return alldays[0:5]
 
