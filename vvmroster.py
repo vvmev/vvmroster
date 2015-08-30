@@ -158,6 +158,19 @@ class Roster(db.Model):
 	def __repr__(self):
 		return '<Roster {} {}>'.format(self.day, self.user.email)
 
+
+class VisitorCounter(db.Model):
+	__tablename__ = 'visitorcounter'
+	ts = db.Column(db.DateTime, primary_key=True)
+	vc = db.Column(db.Integer)
+	ut = db.Column(db.Integer)
+	
+	def __init__(self, ts, vc, ut):
+		self.ts = ts
+		self.vc = vc
+		self.ut = ut
+
+
 @app.before_first_request
 def before_first_request():
 	initdb()

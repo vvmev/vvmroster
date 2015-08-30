@@ -7,6 +7,6 @@ Install Python Virtual Environment
 Installing Flask Components
 ---------------------------
 
- pip install flask flask-security flask-sqlalchemy Flask-MySQL flask-script
+ pip install flask flask-security flask-sqlalchemy Flask-MySQL flask-script paho-mqtt
 
 

@@ -5,6 +5,7 @@ import datetime
 import os
 import locale
 import random
+import paho.mqtt.client as mqtt
 
 from flask import Flask
 from flask.ext.script import Manager
@@ -111,6 +112,48 @@ def deleteOld():
 def initdb():
 	"creates the database and fills it with some demo data"
 	vvmroster.initdb()
+
+
+def updateVisitorCounter_connect(client, userdata, flags, rc):
+	client.subscribe("/vvm/visitorcounter/#")
+
+
+def updateVisitorCounter_message(client, userdata, msg):
+	if msg.topic.endswith("/uptime"):
+		userdata['uptime'] = msg.payload
+	if msg.topic.endswith("/counter"):
+		userdata['counter'] = msg.payload
+	if userdata['uptime'] != 0 and userdata['counter'] != 0:
+		userdata['run'] = False
+
+
+@manager.command
+def updateVisitorCounter():
+	'''
+	Queries the current counter value from the MQTT broker and saves it to the
+	database.  The timestamp is clamped to the full hour on the assumption that
+	we want one count per hour, and this command is called from cron every hour,
+	on the hour.
+	'''
+	userdata = { 'counter': 0, 'uptime': 0, 'run': True }
+	now = datetime.datetime.now()
+	client = mqtt.Client("vvmweb", userdata = userdata)
+	client.on_connect = updateVisitorCounter_connect
+	client.on_message = updateVisitorCounter_message
+	client.username_pw_set('vvmweb', 'EyPa7KAPvR9u')
+	client.connect("vvm.hanse.de", 1883, 60)
+	while (userdata['run']):
+		client.loop(timeout=5)
+		if (datetime.datetime.now() - now).total_seconds() > 60:
+			print "no messages from broker in 60 seconds"
+			client.disconnect()
+			return
+	client.disconnect()
+	now = datetime.datetime.now()
+	now = now.replace(minute=0, second=0, microsecond=0)
+	vc = vvmroster.VisitorCounter(now, userdata['counter'], userdata['uptime'])
+	vvmroster.db.session.add(vc)
+	vvmroster.db.session.commit()
 
 
 if __name__ == "__main__":
