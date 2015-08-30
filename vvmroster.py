@@ -203,10 +203,15 @@ def upcomingDays():
 	alldays = sundays
 	# FIXME: store special days in the database
 	specialdays = []
-	specialdays.append(datetime.datetime(2015, 5, 14))
-	specialdays.append(datetime.datetime(2015, 5, 25))
+	specialdays.append(datetime.datetime(2016, 3, 24)) # easter
+	specialdays.append(datetime.datetime(2016, 3, 25))
+	specialdays.append(datetime.datetime(2016, 3, 28))
+	specialdays.append(datetime.datetime(2016, 5, 5)) # ascention
+	specialdays.append(datetime.datetime(2016, 5, 16)) # pentecost
+	specialdays.append(datetime.datetime(2016, 10, 3)) # reunification
 	alldays.extend(specialdays)
 	alldays.sort()
+	alldays = [i for i in alldays if i >= today]
 	return alldays[0:5]
 
 def currentDay():
