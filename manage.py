@@ -115,6 +115,9 @@ def initdb():
 
 
 def updateVisitorCounter_connect(client, userdata, flags, rc):
+	if rc != 0:
+		userdata['run'] = False
+		print "unable to connect to broker"
 	client.subscribe("/vvm/visitorcounter/#")
 
 
@@ -137,18 +140,20 @@ def updateVisitorCounter():
 	'''
 	userdata = { 'counter': 0, 'uptime': 0, 'run': True }
 	now = datetime.datetime.now()
-	client = mqtt.Client("vvmweb", userdata = userdata)
+	client = mqtt.Client(userdata = userdata)
 	client.on_connect = updateVisitorCounter_connect
 	client.on_message = updateVisitorCounter_message
-	client.username_pw_set('vvmweb', 'EyPa7KAPvR9u')
-	client.connect("vvm.hanse.de", 1883, 60)
+	client.username_pw_set(vvmroster.app.config['VISITORCOUNTER_USER'],
+			vvmroster.app.config['VISITORCOUNTER_PASS'])
+	client.connect(vvmroster.app.config['VISITORCOUNTER_BROKER'], 1883, 60)
 	while (userdata['run']):
 		client.loop(timeout=5)
 		if (datetime.datetime.now() - now).total_seconds() > 60:
 			print "no messages from broker in 60 seconds"
-			client.disconnect()
-			return
+			userdata['run'] = False
 	client.disconnect()
+	if userdata['uptime'] == 0 or userdata['counter'] == 0:
+		return
 	now = datetime.datetime.now()
 	now = now.replace(minute=0, second=0, microsecond=0)
 	vc = vvmroster.VisitorCounter(now, userdata['counter'], userdata['uptime'])
