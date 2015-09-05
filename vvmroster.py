@@ -451,6 +451,7 @@ def accumulateVisitorsPerDay(results):
 		return []
 	countsPerDay = []
 	start = results[0]
+	start.ts = start.ts.replace(hour=0, minute=0, second=0, microsecond=0)
 	elevenam = start
 	fivepm = start
 	print len(results[1:-1])
@@ -463,6 +464,7 @@ def accumulateVisitorsPerDay(results):
 			}
 			countsPerDay.append(counts)
 			start = result
+			start.ts = start.ts.replace(hour=0, minute=0, second=0, microsecond=0)
 			elevenam = start
 			fivepm = start
 		if result.ts.hour <= 11:
@@ -505,7 +507,7 @@ def visitorcount(start=None, end=None):
 								   .order_by(VisitorCounter.ts)\
 								   .all()
 	return flask.jsonify(items=accumulateVisitorsPerDay(results),
-		start=start.isoformat(), end=end.isoformat())    
+		start=start.isoformat(), end=end.isoformat())
 
 if __name__ == '__main__':
 	app.run(port=5001, debug=True)
