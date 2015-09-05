@@ -23,6 +23,7 @@
 				</ul>
 				<!--p class="navbar-text navbar-right">Signed in as <a href="#" class="navbar-link">Mark Otto</a></p -->
 				<ul class="nav navbar-nav navbar-right">
+					<li ui-sref-active="active"><a ui-sref="page.visitors">Besucherzähler</a></li>
 					<li ng-if='status.admin_user' ui-sref-active="active"><a
 					ui-sref="page.admin-users">Benutzer-Verwaltung</a></li>
 					<li class="dropdown" dropdown>

@@ -6,6 +6,7 @@ import os
 import locale
 import random
 import paho.mqtt.client as mqtt
+import sqlalchemy
 
 from flask import Flask
 from flask.ext.script import Manager
@@ -76,20 +77,39 @@ def filldb():
 	random.seed()
 	admin_role = vvmroster.Role.query.filter_by(name='admin').first()
 	sunday = vvmroster.currentDay()
+	
+	print "Creating 50 users with random entries"
 	for i in range(50):
-		user = vvmroster.user_datastore.create_user(name='User {}'.format(i),
-			email='user{}@example.com'.format(i),
-			password=vvmroster.encrypt_password('password'), roles=[])
-		days = list((sunday + datetime.timedelta(days=i*7)) for i in range(0,6))
-		for day in random.sample(days, 2):
-			r = vvmroster.Roster()
-			r.day = day
-			r.user = user
-			r.will_open = random.randint(0,1)
-			r.will_service = random.randint(0,1)
-			r.will_close = random.randint(0,1)
-			r.comment = ""
-			vvmroster.db.session.add(r)
+		try:
+			user = vvmroster.user_datastore.create_user(name='User {}'.format(i),
+				email='user{}@example.com'.format(i),
+				password=vvmroster.encrypt_password('password'), roles=[])
+			vvmroster.db.session.commit()
+			days = list((sunday + datetime.timedelta(days=i*7)) for i in range(0,6))
+			for day in random.sample(days, 2):
+				r = vvmroster.Roster()
+				r.day = day
+				r.user = user
+				r.will_open = random.randint(0,1)
+				r.will_service = random.randint(0,1)
+				r.will_close = random.randint(0,1)
+				r.comment = ""
+				vvmroster.db.session.add(r)
+		except sqlalchemy.exc.IntegrityError:
+			vvmroster.db.session.rollback()
+			pass
+	vvmroster.db.session.commit()
+
+	print "Creating visitor counter entries for the past three weeks"
+	start = sunday - datetime.timedelta(21)
+	start = start.replace(hour=0, minute=0, second=0, microsecond=0)
+	counter = 123
+	for d in range((datetime.datetime.now() - start).days + 1):
+		for h in range(24):
+			counter += random.randint(0, 10 if 11 <= h <= 17 else 1)
+			day = start + datetime.timedelta(days=d, hours=h)
+			vc = vvmroster.VisitorCounter(day, counter, 1)
+			vvmroster.db.session.add(vc)
 	vvmroster.db.session.commit()
 
 

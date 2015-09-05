@@ -60,6 +60,22 @@ roster.config(function($stateProvider, $urlRouterProvider) {
 				},
 			},
 		})
+		.state('page.visitors', {
+			url: '/visitors',
+			templateUrl: 'static/partials/visitors.html',
+			controller: 'VisitorsController',
+			resolve: {
+				visitorRest: function(Restangular) {
+					var resource = Restangular.all('visitorcount');
+					return resource.getList().then(function(entries) {
+						return {
+							entries: entries,
+							resource: resource,
+						}
+					});
+				},
+			},
+		})
 		.state('page.settings', {
 			url: '/settings',
 			templateUrl: 'static/partials/settings.html',
@@ -283,6 +299,23 @@ roster.controller('DayController', function($scope, $rootScope, $timeout, roster
 		startUpdateTimer();
 	};
 	processEntries(rosterRest.entries);
+});
+
+
+/*
+ * Display visitor counts.
+ */
+roster.controller('VisitorsController', function($scope, $rootScope, $timeout, visitorRest) {
+	$scope.entries = []
+	visitorRest.entries.map(function(e) {
+		$scope.entries.push({
+			'ts': new Date(e.ts),
+			'day': e.day,
+			'eleventofive': e.eleventofive
+		});
+	});
+	$scope.start = $scope.entries[0].ts;
+	$scope.end = $scope.entries.slice(-1)[0].ts;
 });
 
 

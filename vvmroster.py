@@ -34,6 +34,7 @@ app.config['DEFAULT_MAIL_SENDER'] = 'VVM Dienstplan <vvm@zs64.net>'
 if 'VVMROSTER_APPLICATION_SETTINGS_PATH' in os.environ:
 	app.config.from_envvar('VVMROSTER_APPLICATION_SETTINGS_PATH')
 
+
 @sqlalchemy.event.listens_for(sqlalchemy.engine.Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
 	'''
@@ -169,6 +170,8 @@ class VisitorCounter(db.Model):
 		self.ts = ts
 		self.vc = vc
 		self.ut = ut
+	def __repr__(self):
+		return '<VisitorCounter {} {}>'.format(self.ts, self.vc)
 
 
 @app.before_first_request
@@ -438,6 +441,71 @@ def rosterentries(day, id=None):
 		return flask.jsonify(ok=True)
 	flask.abort(405)
 
-    
+
+def accumulateVisitorsPerDay(results):
+	'''
+	Given a result set of counter values, accumulate them to produce a visitor
+	count for each day
+	'''
+	if len(results) < 2:
+		return []
+	countsPerDay = []
+	start = results[0]
+	elevenam = start
+	fivepm = start
+	print len(results[1:-1])
+	for result in results[1:-1]:
+		if result.ts - start.ts >= datetime.timedelta(1):
+			counts = {
+				'ts': start.ts.isoformat(),
+				'day': result.vc - start.vc,
+				'eleventofive': fivepm.vc - elevenam.vc
+			}
+			countsPerDay.append(counts)
+			start = result
+			elevenam = start
+			fivepm = start
+		if result.ts.hour <= 11:
+			elevenam = result
+		if result.ts.hour <= 17:
+			fivepm = result
+	counts = {
+		'ts': start.ts.isoformat(),
+		'day': results[-1].vc - start.vc,
+		'eleventofive': fivepm.vc - elevenam.vc
+	}
+	countsPerDay.append(counts)
+	return countsPerDay
+
+@app.route('/api/visitorcount', methods=['GET'])
+@app.route('/api/visitorcount/<start>', methods=['GET'])
+@app.route('/api/visitorcount/<start>-<end>', methods=['GET'])
+def visitorcount(start=None, end=None):
+	'''
+	API providing accumulated visitor counts based on the VisitorCounter values
+	stored in the database.
+	'''
+	if not current_user.is_authenticated():
+		flask.abort(403)
+	if not start:
+		# Two Sundays ago
+		start = datetime.datetime.now() + datetime.timedelta(days=6-datetime.datetime.now().weekday() - 21)
+	else:
+		start = datetime.datetime(*map(int, re.split('[^\d]', day)[:-1]))
+	start = start.replace(hour=0, minute=0, second=0, microsecond=0)
+	if not end:
+		end = datetime.datetime.now() + datetime.timedelta(1)
+	else:
+		end = datetime.datetime(*map(int, re.split('[^\d]', day)[:-1]))
+	end = end.replace(hour=0, minute=0, second=0, microsecond=0)
+	
+	json_results = []
+	results = VisitorCounter.query.filter(VisitorCounter.ts >= start,
+										  VisitorCounter.ts < end)\
+								   .order_by(VisitorCounter.ts)\
+								   .all()
+	return flask.jsonify(items=accumulateVisitorsPerDay(results),
+		start=start.isoformat(), end=end.isoformat())    
+
 if __name__ == '__main__':
 	app.run(port=5001, debug=True)
