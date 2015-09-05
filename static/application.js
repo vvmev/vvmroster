@@ -146,7 +146,13 @@ roster.controller('MainController', function(Restangular, $scope, $rootScope, $s
 			$scope.status = items[0];
 			$rootScope.status = items[0];
 			startUpdateTimer();
-			if ($state.current.name == '' || $state.is('') || $state.is('page')) {
+			if ($state.current.name == '') {
+				//$state.transitionTo('page.today');
+			}
+			if ($state.is('')) {
+				$state.transitionTo('page.today');
+			}
+			if ($state.is('page')) {
 				$state.transitionTo('page.today');
 			}
 		});
