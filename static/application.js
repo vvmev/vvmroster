@@ -152,7 +152,7 @@ roster.controller('MainController', function(Restangular, $scope, $rootScope, $s
 				if ($state.current.name == "" || $state.is('') || $state.is('page')) {
 					$state.go('page.today');
 				}
-			}, 10);
+			}, 100);
 		});
 	};
 	$rootScope.updateStatus = update;
@@ -310,14 +310,28 @@ roster.controller('DayController', function($scope, $rootScope, $timeout, roster
  * Display visitor counts.
  */
 roster.controller('VisitorsController', function($scope, $rootScope, $timeout, visitorRest) {
-	$scope.entries = []
-	$scope.extra = visitorRest.entries.extra;
-	visitorRest.entries.map(function(e) {
-		// convert timestamp to JS date so we can use the prototype functions in the
-		// template
-		e.ts = new Date(e.ts);
-		$scope.entries.push(e);
-	});
+	var updateTimeout;
+	var startUpdateTimer = function() {
+		if (updateTimeout) {
+			$timeout.cancel(updateTimeout);
+		}
+		updateTimeout = $timeout(update, 60*1000);
+	};
+	var processEntries = function(entries) {
+		$scope.entries = []
+		$scope.extra = entries.extra;
+		visitorRest.entries.map(function(e) {
+			// convert timestamp to JS date so we can use the prototype functions in the
+			// template
+			e.ts = new Date(e.ts);
+			$scope.entries.push(e);
+		});
+		startUpdateTimer();
+	};
+	var update = function() {
+		visitorRest.resource.getList().then(processEntries);
+	};
+	processEntries(visitorRest.entries);
 });
 
 
