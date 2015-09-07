@@ -147,15 +147,12 @@ roster.controller('MainController', function(Restangular, $scope, $rootScope, $s
 			$scope.status = items[0];
 			$rootScope.status = items[0];
 			startUpdateTimer();
-			if ($state.current.name == '') {
-				//$state.transitionTo('page.today');
-			}
-			if ($state.is('')) {
-				$state.transitionTo('page.today');
-			}
-			if ($state.is('page')) {
-				$state.transitionTo('page.today');
-			}
+			$timeout(function() {
+				console.log($state.current);
+				if ($state.current.name == "" || $state.is('') || $state.is('page')) {
+					$state.go('page.today');
+				}
+			}, 10);
 		});
 	};
 	$rootScope.updateStatus = update;
@@ -315,7 +312,6 @@ roster.controller('DayController', function($scope, $rootScope, $timeout, roster
 roster.controller('VisitorsController', function($scope, $rootScope, $timeout, visitorRest) {
 	$scope.entries = []
 	$scope.extra = visitorRest.entries.extra;
-	console.log($scope.extra)
 	visitorRest.entries.map(function(e) {
 		// convert timestamp to JS date so we can use the prototype functions in the
 		// template
