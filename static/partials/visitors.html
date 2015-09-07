@@ -57,19 +57,27 @@
 					</thead>
 					<tbody>
 						<tr>
-							<td>Datenbank</td>
+							<th>Datenbank</th>
 							<td>{{extra.latest.ts | date: 'dd.MM.yyyy HH:mm:ss'}}</td>
 							<td class="text-right">{{extra.latest.vc}}</td>
 							<td class="text-right">{{extra.latest.ut_hms}}</td>
 						</tr>
 						<tr>
-							<td>Broker</td>
+							<th>Broker</th>
 							<td>{{extra.broker.ts | date: 'dd.MM.yyyy HH:mm:ss'}}</td>
 							<td class="text-right">{{extra.broker.vc}}</td>
 							<td class="text-right">{{extra.broker.ut_hms}}</td>
 						</tr>
 					</tbody>
 				</table>
+			</div>
+			<div class="row">
+				<div class="col-xs-12">
+					<p>Zeigt den jüngsten Eintrag aus der Datenbank, und den aktuellen
+						Stand des Brokers. Die Daten werden alle 60 Sekunden aktualisert.
+						Uptime ist die Zeit, die das Modul online ist, in Stunden,
+						Minuten, Sekunden.</p>
+				</div>
 			</div>
 		</div>
 	</div>
