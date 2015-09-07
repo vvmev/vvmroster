@@ -12,6 +12,7 @@ roster.config(function(RestangularProvider) {
 	base = base.slice(-1) == '/' ? base : base + '/';
 	RestangularProvider.setBaseUrl(base + 'api');
 	RestangularProvider.addResponseInterceptor(function(data, operation, what, url, response, deferred) {
+		data.items.extra = data.extra;
 		return data.items;
 	});
 });
@@ -313,15 +314,14 @@ roster.controller('DayController', function($scope, $rootScope, $timeout, roster
  */
 roster.controller('VisitorsController', function($scope, $rootScope, $timeout, visitorRest) {
 	$scope.entries = []
+	$scope.extra = visitorRest.entries.extra;
+	console.log($scope.extra)
 	visitorRest.entries.map(function(e) {
-		$scope.entries.push({
-			'ts': new Date(e.ts),
-			'day': e.day,
-			'eleventofive': e.eleventofive
-		});
+		// convert timestamp to JS date so we can use the prototype functions in the
+		// template
+		e.ts = new Date(e.ts);
+		$scope.entries.push(e);
 	});
-	$scope.start = $scope.entries[0].ts;
-	$scope.end = $scope.entries.slice(-1)[0].ts;
 });
 
 

@@ -3,6 +3,7 @@
 
 from ReverseProxied import ReverseProxied
 import datetime
+import paho.mqtt.client as mqtt
 import re
 import os
 import time
@@ -24,12 +25,14 @@ app = flask.Flask(__name__)
 app.wsgi_app = ReverseProxied(app.wsgi_app)
 db = SQLAlchemy(app)
 
+
 app.config['LOCALE'] = 'de_DE'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///roster.db'
 app.config['SECRET_KEY'] = 'developmentNotSoSecretKey'
 app.config['SECURITY_PASSWORD_HASH'] = 'sha512_crypt'
 app.config['SECURITY_PASSWORD_SALT'] = 'developmentNotSoSecretKey'
 app.config['DEFAULT_MAIL_SENDER'] = 'VVM Dienstplan <vvm@zs64.net>'
+app.config['COUNTER_CORRECTION_FACTOR'] = 2
 
 if 'VVMROSTER_APPLICATION_SETTINGS_PATH' in os.environ:
 	app.config.from_envvar('VVMROSTER_APPLICATION_SETTINGS_PATH')
@@ -50,6 +53,7 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
 roles_users = db.Table('roles_users',
 		db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
 		db.Column('role_id', db.Integer(), db.ForeignKey('role.id')))
+
 
 class Role(db.Model, RoleMixin):
 	'''
@@ -174,9 +178,39 @@ class VisitorCounter(db.Model):
 		return '<VisitorCounter {} {}>'.format(self.ts, self.vc)
 
 
+class CounterListener:
+	def on_connect(self, client, userdata, flags, rc):
+		client.subscribe("/vvm/visitorcounter/#")
+
+	def on_message(self, client, userdata, msg):
+		if msg.topic.endswith("/uptime"):
+			self.ut = int(msg.payload)
+		if msg.topic.endswith("/counter"):
+			self.vc = int(msg.payload)
+		self.ts = datetime.datetime.now()
+	
+	def __init__(self):
+		self.vc = 0
+		self.ut = 0
+		self.ts = datetime.datetime(1970, 1, 1)
+		self.client = mqtt.Client(userdata=self)
+		self.client.on_connect = self.on_connect
+		self.client.on_message = self.on_message
+		self.client.username_pw_set(app.config['VISITORCOUNTER_USER'],
+			app.config['VISITORCOUNTER_PASS'])
+		self.client.connect_async(app.config['VISITORCOUNTER_BROKER'], 1883, 60)
+		self.client.loop_start()
+
+	def __repr__(self):
+		return '<CounterListener vc={}, ut={}>'.format(self.vc, self.ut)
+
+
 @app.before_first_request
 def before_first_request():
+	global counterListener
 	initdb()
+	if not 'counterListener' in globals():
+		counterListener = CounterListener()
 
 
 def initdb():
@@ -442,6 +476,16 @@ def rosterentries(day, id=None):
 	flask.abort(405)
 
 
+def calcVisitorEntry(start, elevenam, fivepm, end):
+	f = app.config['COUNTER_CORRECTION_FACTOR'];
+	return {
+		'ts': start.ts.isoformat(),
+		'day': (end.vc - start.vc) / f,
+		'midnighttoeleven': (elevenam.vc - start.vc) / f,
+		'eleventofive': (fivepm.vc - elevenam.vc) / f,
+		'fivetomidnight': (end.vc - fivepm.vc) / f
+	}
+
 def accumulateVisitorsPerDay(results):
 	'''
 	Given a result set of counter values, accumulate them to produce a visitor
@@ -457,12 +501,7 @@ def accumulateVisitorsPerDay(results):
 	print len(results[1:-1])
 	for result in results[1:-1]:
 		if result.ts - start.ts >= datetime.timedelta(1):
-			counts = {
-				'ts': start.ts.isoformat(),
-				'day': result.vc - start.vc,
-				'eleventofive': fivepm.vc - elevenam.vc
-			}
-			countsPerDay.append(counts)
+			countsPerDay.append(calcVisitorEntry(start, elevenam, fivepm, result))
 			start = result
 			start.ts = start.ts.replace(hour=0, minute=0, second=0, microsecond=0)
 			elevenam = start
@@ -471,13 +510,9 @@ def accumulateVisitorsPerDay(results):
 			elevenam = result
 		if result.ts.hour <= 17:
 			fivepm = result
-	counts = {
-		'ts': start.ts.isoformat(),
-		'day': results[-1].vc - start.vc,
-		'eleventofive': fivepm.vc - elevenam.vc
-	}
-	countsPerDay.append(counts)
+	countsPerDay.append(calcVisitorEntry(start, elevenam, fivepm, results[-1]))
 	return countsPerDay
+
 
 @app.route('/api/visitorcount', methods=['GET'])
 @app.route('/api/visitorcount/<start>', methods=['GET'])
@@ -506,8 +541,27 @@ def visitorcount(start=None, end=None):
 										  VisitorCounter.ts < end)\
 								   .order_by(VisitorCounter.ts)\
 								   .all()
+	latest = VisitorCounter.query.order_by(VisitorCounter.ts.desc()).first();
+	extra = {
+		'end': end.isoformat(),
+		'start': start.isoformat(),
+		'latest': {
+			'ts': latest.ts.isoformat(),
+			'vc': latest.vc,
+			'ut': latest.ut,
+			'ut_hms': '{:d}:{:02d}:{:02d}'.format(latest.ut / 3600,
+				(latest.ut / 60) % 60, latest.ut % 60),
+		},
+		'broker': {
+			'ts': counterListener.ts.isoformat(),
+			'vc': counterListener.vc,
+			'ut': counterListener.ut,
+			'ut_hms': '{:d}:{:02d}:{:02d}'.format(counterListener.ut / 3600,
+				(counterListener.ut / 60) % 60, counterListener.ut % 60),
+		},
+	}
 	return flask.jsonify(items=accumulateVisitorsPerDay(results),
-		start=start.isoformat(), end=end.isoformat())
+		extra=extra)
 
 if __name__ == '__main__':
 	app.run(port=5001, debug=True)

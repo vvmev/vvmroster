@@ -23,13 +23,13 @@
 				</ul>
 				<!--p class="navbar-text navbar-right">Signed in as <a href="#" class="navbar-link">Mark Otto</a></p -->
 				<ul class="nav navbar-nav navbar-right">
-					<li ui-sref-active="active"><a ui-sref="page.visitors">Besucherzähler</a></li>
-					<li ng-if='status.admin_user' ui-sref-active="active"><a
-					ui-sref="page.admin-users">Benutzer-Verwaltung</a></li>
+					<li ui-sref-active="active"><a ui-sref="page.visitors">Besucher</a></li>
 					<li class="dropdown" dropdown>
 						<a class="dropdown-toggle" dropdown-toggle><span class="glyphicon glyphicon-user" aria-hidden="true"></span>
 						<span class="caret"></span><span class="sr-only">Benutzermenü</span></a>
 						<ul class="dropdown-menu" role="menu">
+							<li ng-if='status.admin_user' ui-sref-active="active"><a
+								ui-sref="page.admin-users">Benutzer-Verwaltung</a></li>
 							<li ui-sref-active="active"><a ui-sref="page.settings">Einstellungen</a></li>
 							<li><a href="logout">{{status.name}} abmelden</a></li>
 						</ul>
