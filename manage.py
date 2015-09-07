@@ -181,5 +181,10 @@ def updateVisitorCounter():
 	vvmroster.db.session.commit()
 
 
+@manager.command
+def printLastestVisitorCount():
+    results = vvmroster.VisitorCounter.query.order_by(vvmroster.VisitorCounter.ts.desc()).first()
+    print results
+
 if __name__ == "__main__":
     manager.run()
