@@ -498,8 +498,7 @@ def accumulateVisitorsPerDay(results):
 	start.ts = start.ts.replace(hour=0, minute=0, second=0, microsecond=0)
 	elevenam = start
 	fivepm = start
-	print len(results[1:-1])
-	for result in results[1:-1]:
+	for result in results[1:]:
 		if result.ts - start.ts >= datetime.timedelta(1):
 			countsPerDay.append(calcVisitorEntry(start, elevenam, fivepm, result))
 			start = result
