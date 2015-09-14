@@ -1,5 +1,9 @@
 //
 
+if (window.location.hash == '') {
+	window.location.hash = '/today'
+}
+
 var roster = angular.module('rosterApp', [
 	'restangular',
 	'ui.bootstrap',
@@ -320,12 +324,14 @@ roster.controller('VisitorsController', function($scope, $rootScope, $timeout, v
 	var processEntries = function(entries) {
 		$scope.entries = []
 		$scope.extra = entries.extra;
-		visitorRest.entries.map(function(e) {
+		entries.map(function(e) {
 			// convert timestamp to JS date so we can use the prototype functions in the
 			// template
 			e.ts = new Date(e.ts);
 			$scope.entries.push(e);
 		});
+		$scope.extra.start = $scope.entries[0].ts;
+		$scope.extra.end = $scope.entries.slice(-1)[0].ts;
 		startUpdateTimer();
 	};
 	var update = function() {
