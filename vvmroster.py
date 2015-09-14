@@ -542,7 +542,7 @@ def visitorcount(start=None, end=None):
 								   .all()
 	latest = VisitorCounter.query.order_by(VisitorCounter.ts.desc()).first();
 	extra = {
-		'end': end.isoformat(),
+		'end': (end + datetime.timedelta(-1)).isoformat(),
 		'start': start.isoformat(),
 		'latest': {
 			'ts': latest.ts.isoformat(),
