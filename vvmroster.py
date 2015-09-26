@@ -240,6 +240,7 @@ def upcomingDays():
 	alldays = sundays
 	# FIXME: store special days in the database
 	specialdays = []
+	specialdays.append(datetime.datetime(2015, 10, 3)) # reunification
 	specialdays.append(datetime.datetime(2016, 3, 24)) # easter
 	specialdays.append(datetime.datetime(2016, 3, 25))
 	specialdays.append(datetime.datetime(2016, 3, 28))
