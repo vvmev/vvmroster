@@ -32,7 +32,7 @@ app.config['SECRET_KEY'] = 'developmentNotSoSecretKey'
 app.config['SECURITY_PASSWORD_HASH'] = 'sha512_crypt'
 app.config['SECURITY_PASSWORD_SALT'] = 'developmentNotSoSecretKey'
 app.config['DEFAULT_MAIL_SENDER'] = 'VVM Dienstplan <vvm@zs64.net>'
-app.config['COUNTER_CORRECTION_FACTOR'] = 2
+app.config['COUNTER_CORRECTION_FACTOR'] = 3.0
 
 if 'VVMROSTER_APPLICATION_SETTINGS_PATH' in os.environ:
 	app.config.from_envvar('VVMROSTER_APPLICATION_SETTINGS_PATH')
@@ -481,10 +481,10 @@ def calcVisitorEntry(start, elevenam, fivepm, end):
 	f = app.config['COUNTER_CORRECTION_FACTOR'];
 	return {
 		'ts': start.ts.isoformat(),
-		'day': (end.vc - start.vc) / f,
-		'midnighttoeleven': (elevenam.vc - start.vc) / f,
-		'eleventofive': (fivepm.vc - elevenam.vc) / f,
-		'fivetomidnight': (end.vc - fivepm.vc) / f
+		'day': int((end.vc - start.vc) / f),
+		'midnighttoeleven': int((elevenam.vc - start.vc) / f),
+		'eleventofive': int((fivepm.vc - elevenam.vc) / f),
+		'fivetomidnight': int((end.vc - fivepm.vc) / f)
 	}
 
 def accumulateVisitorsPerDay(results):
