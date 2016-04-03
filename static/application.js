@@ -16,7 +16,8 @@ roster.config(function(RestangularProvider) {
 	base = base.slice(-1) == '/' ? base : base + '/';
 	RestangularProvider.setBaseUrl(base + 'api');
 	RestangularProvider.addResponseInterceptor(function(data, operation, what, url, response, deferred) {
-		data.items.extra = data.extra;
+		if ('extra' in data)
+			data.items.extra = data.extra;
 		return data.items;
 	});
 });
@@ -303,7 +304,8 @@ roster.controller('DayController', function($scope, $rootScope, $timeout, roster
 			// if we don't have an entry yet, create it asap
 			$scope.save();
 		}
-		debounceTimeout = $timeout($scope.save, 1000);
+		// delay save while user is typing, but before reloading page etc.
+		debounceTimeout = $timeout($scope.save, 500);
 		startUpdateTimer();
 	};
 	processEntries(rosterRest.entries);

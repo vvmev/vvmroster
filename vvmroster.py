@@ -196,10 +196,11 @@ class CounterListener:
 		self.client = mqtt.Client(userdata=self)
 		self.client.on_connect = self.on_connect
 		self.client.on_message = self.on_message
-		self.client.username_pw_set(app.config['VISITORCOUNTER_USER'],
-			app.config['VISITORCOUNTER_PASS'])
-		self.client.connect_async(app.config['VISITORCOUNTER_BROKER'], 1883, 60)
-		self.client.loop_start()
+		if 'VISITORCOUNTER_USER' in app.config:
+			self.client.username_pw_set(app.config['VISITORCOUNTER_USER'],
+				app.config['VISITORCOUNTER_PASS'])
+			self.client.connect_async(app.config['VISITORCOUNTER_BROKER'], 1883, 60)
+			self.client.loop_start()
 
 	def __repr__(self):
 		return '<CounterListener vc={}, ut={}>'.format(self.vc, self.ut)
