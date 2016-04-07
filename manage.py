@@ -201,7 +201,7 @@ def rollupVisitorCounts():
 	end = end.ts
 	print "rolling up entries from {} to {}".format(start.strftime("%Y-%m-%d"),
 		end.strftime("%Y-%m-%d"))
-	return
+
 	results = VisitorCounter.query.filter(VisitorCounter.ts >= start,
 										  VisitorCounter.ts < end)\
 								   .order_by(VisitorCounter.ts)\
