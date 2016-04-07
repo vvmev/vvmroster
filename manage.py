@@ -5,8 +5,10 @@ import datetime
 import os
 import locale
 import random
+import re
 import paho.mqtt.client as mqtt
 import sqlalchemy
+import xlsxwriter
 
 from flask import Flask
 from flask.ext.script import Manager
@@ -77,7 +79,7 @@ def filldb():
 	random.seed()
 	admin_role = vvmroster.Role.query.filter_by(name='admin').first()
 	sunday = vvmroster.currentDay()
-	
+
 	print "Creating 50 users with random entries"
 	for i in range(50):
 		try:
@@ -179,6 +181,98 @@ def updateVisitorCounter():
 	vc = vvmroster.VisitorCounter(now, userdata['counter'], userdata['uptime'])
 	vvmroster.db.session.add(vc)
 	vvmroster.db.session.commit()
+
+
+@manager.command
+def rollupVisitorCounts():
+	'''
+	Fill the rollup table visitorcounts_perday based on visitorcounter values.
+	'''
+	# start should be the highest ts fom VisitorCountsPerDay, end should be
+	# the highest ts from VisitorCounter.
+
+	VisitorCounter = vvmroster.VisitorCounter
+	VisitorCountPerHour = vvmroster.VisitorCountPerHour
+	start = VisitorCountPerHour.query.order_by(VisitorCountPerHour.ts.desc()).first()
+	if not start:
+		start = VisitorCounter.query.order_by(VisitorCounter.ts).first()
+	end = VisitorCounter.query.order_by(VisitorCounter.ts.desc()).first()
+	start = start.ts
+	end = end.ts
+	print "rolling up entries from {} to {}".format(start.strftime("%Y-%m-%d"),
+		end.strftime("%Y-%m-%d"))
+	return
+	results = VisitorCounter.query.filter(VisitorCounter.ts >= start,
+										  VisitorCounter.ts < end)\
+								   .order_by(VisitorCounter.ts)\
+								   .all()
+	vcbyts = {}
+	for result in results:
+		vcbyts[result.ts] = result.vc
+	ts = start
+	counter = results[0].vc
+	while ts <= end:
+		if ts in vcbyts:
+			count = vcbyts[ts] - counter
+			counter = vcbyts[ts]
+		else:
+			count = 0
+		vc = vvmroster.VisitorCountPerHour(ts, count)
+		vvmroster.db.session.add(vc)
+		if ts.hour == 23:
+			vvmroster.db.session.commit()
+		ts += datetime.timedelta(hours=1)
+	pass
+
+
+@manager.command
+def exportVisitorCounter(file="visitorcounter.xlsx", start=None, end=None):
+	'''
+	Export all visitor counter entries into an Excel sheet.
+	'''
+	if not start:
+		# Two Sundays ago
+		start = datetime.datetime.now() + datetime.timedelta(days=6-datetime.datetime.now().weekday() - 21)
+	else:
+		start = datetime.datetime(*map(int, re.split('[^\d]', day)[:-1]))
+	start = start.replace(hour=0, minute=0, second=0, microsecond=0)
+	if not end:
+		end = datetime.datetime.now() + datetime.timedelta(1)
+	else:
+		end = datetime.datetime(*map(int, re.split('[^\d]', day)[:-1]))
+	end = end.replace(hour=0, minute=0, second=0, microsecond=0)
+
+	VisitorCounter = vvmroster.VisitorCounter
+	json_results = []
+	results = VisitorCounter.query.filter(VisitorCounter.ts >= start,
+										  VisitorCounter.ts < end)\
+								   .order_by(VisitorCounter.ts)\
+								   .all()
+	items = vvmroster.accumulateVisitorsPerDay(results)
+	print items
+
+	workbook = xlsxwriter.Workbook(file)
+	bold = workbook.add_format({'bold': 1})
+	date_format = workbook.add_format({'num_format': 'd.m.yyyy'})
+	worksheet = workbook.add_worksheet()
+	worksheet.write_string(0, 0, 'Date', bold)
+	worksheet.write_string(0, 1, 'Day', bold)
+	worksheet.write_string(0, 2, '00-11', bold)
+	worksheet.write_string(0, 3, '11-17', bold)
+	worksheet.write_string(0, 4, '17-24', bold)
+
+	row = 1
+	for item in items:
+		day = datetime.datetime(*map(int, re.split('[^\d]', item['ts'])[:-1]))
+		print day
+		worksheet.write_datetime(row, 0, day, date_format)
+		worksheet.write_number  (row, 1, item['day'])
+		worksheet.write_number  (row, 2, item['midnighttoeleven'])
+		worksheet.write_number  (row, 3, item['eleventofive'])
+		worksheet.write_number  (row, 4, item['fivetomidnight'])
+		row = row + 1
+
+	workbook.close()
 
 
 @manager.command

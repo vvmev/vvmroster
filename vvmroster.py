@@ -100,7 +100,7 @@ class Roster(db.Model):
 	will_service = db.Column(db.Integer)
 	will_close = db.Column(db.Integer)
 	comment = db.Column(db.String(1000))
-	
+
 	@classmethod
 	def getCountsForSundays(self, days=None, filled=None):
 		"""
@@ -169,13 +169,25 @@ class VisitorCounter(db.Model):
 	ts = db.Column(db.DateTime, primary_key=True)
 	vc = db.Column(db.Integer)
 	ut = db.Column(db.Integer)
-	
+
 	def __init__(self, ts, vc, ut):
 		self.ts = ts
 		self.vc = vc
 		self.ut = ut
 	def __repr__(self):
 		return '<VisitorCounter {} {}>'.format(self.ts, self.vc)
+
+
+class VisitorCountPerHour(db.Model):
+	__tablename__ = 'visitorcounter_perhour'
+	ts = db.Column(db.DateTime, primary_key=True)
+	count = db.Column(db.Integer)
+
+	def __init__(self, ts, count):
+		self.ts = ts
+		self.count = count
+	def __repr__(self):
+		return '<VisitorCountPerHour {} {}>'.format(self.ts, self.count)
 
 
 class CounterListener:
@@ -188,7 +200,7 @@ class CounterListener:
 		if msg.topic.endswith("/counter"):
 			self.vc = int(msg.payload)
 		self.ts = datetime.datetime.now()
-	
+
 	def __init__(self):
 		self.vc = 0
 		self.ut = 0
@@ -536,7 +548,7 @@ def visitorcount(start=None, end=None):
 	else:
 		end = datetime.datetime(*map(int, re.split('[^\d]', day)[:-1]))
 	end = end.replace(hour=0, minute=0, second=0, microsecond=0)
-	
+
 	json_results = []
 	results = VisitorCounter.query.filter(VisitorCounter.ts >= start,
 										  VisitorCounter.ts < end)\
