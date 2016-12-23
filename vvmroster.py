@@ -260,6 +260,7 @@ def upcomingDays():
 	specialdays.append(datetime.datetime(2016, 5, 5)) # ascention
 	specialdays.append(datetime.datetime(2016, 5, 16)) # pentecost
 	specialdays.append(datetime.datetime(2016, 10, 3)) # reunification
+	specialdays.append(datetime.datetime(2016, 12, 26)) # boxing day
 	alldays.extend(specialdays)
 	alldays.sort()
 	alldays = [i for i in alldays if i >= today]
