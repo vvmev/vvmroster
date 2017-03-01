@@ -197,7 +197,7 @@ def rollupVisitorCounts():
 	if not start:
 		start = VisitorCounter.query.order_by(VisitorCounter.ts).first()
 	end = VisitorCounter.query.order_by(VisitorCounter.ts.desc()).first()
-	start = start.ts
+	start = start.ts + datetime.timedelta(1)
 	end = end.ts
 	print "rolling up entries from {} to {}".format(start.strftime("%Y-%m-%d"),
 		end.strftime("%Y-%m-%d"))
