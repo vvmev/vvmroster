@@ -262,6 +262,10 @@ def upcomingDays():
 	specialdays.append(datetime.datetime(2016, 10, 3)) # reunification
 	specialdays.append(datetime.datetime(2016, 12, 26)) # boxing day
 
+	specialdays.append(datetime.datetime(2018, 10, 31)) # reformation
+	specialdays.append(datetime.datetime(2018, 12, 25)) # xmas day
+	specialdays.append(datetime.datetime(2018, 12, 26)) # boxing day
+
 	specialdays.append(datetime.datetime(2019, 4, 19)) # good friday
 	specialdays.append(datetime.datetime(2019, 3, 22)) # easter monday
 	specialdays.append(datetime.datetime(2019, 5, 1)) # may day
